@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chess Cipher v4.0</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Sans+3:wght@400;600;700&family=Source+Code+Pro:wght@400;500&display=swap">
+
+<style>
+:root {
+  --bg: #FAF6F0;
+  --bg-alt: #F0EAE0;
+  --bg-code: #2A2118;
+  --text: #1A1612;
+  --text-secondary: #6B5D4F;
+  --accent: #B08D3A;
+  --accent-dim: #C8A94E33;
+  --board-light: #F0D9B5;
+  --board-dark: #B58863;
+  --border: #D4C9BA;
+  --diagram-bg: #F5F0E8;
+  --code-text: #E8DFD4;
+  --highlight: #C8A94E;
+  --piece-white: #FFF;
+  --piece-black: #2A2118;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1A1612;
+    --bg-alt: #231E18;
+    --bg-code: #12100D;
+    --text: #E8E0D4;
+    --text-secondary: #9B8E7F;
+    --accent: #C8A94E;
+    --accent-dim: #C8A94E22;
+    --board-light: #F0D9B5;
+    --board-dark: #B58863;
+    --border: #3A322A;
+    --diagram-bg: #231E18;
+    --code-text: #E8DFD4;
+    --highlight: #C8A94E;
+    --piece-white: #E8E0D4;
+    --piece-black: #3A322A;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #1A1612;
+  --bg-alt: #231E18;
+  --bg-code: #12100D;
+  --text: #E8E0D4;
+  --text-secondary: #9B8E7F;
+  --accent: #C8A94E;
+  --accent-dim: #C8A94E22;
+  --board-light: #F0D9B5;
+  --board-dark: #B58863;
+  --border: #3A322A;
+  --diagram-bg: #231E18;
+  --code-text: #E8DFD4;
+  --highlight: #C8A94E;
+  --piece-white: #E8E0D4;
+  --piece-black: #3A322A;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Source Sans 3', 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.72;
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+h1, h2, h3 {
+  font-family: 'Playfair Display', 'Georgia', serif;
+  text-wrap: balance;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: 2.4rem;
+  font-weight: 700;
+  margin: 0 0 0.3rem;
+  letter-spacing: -0.01em;
+}
+
+.subtitle {
+  font-family: 'Source Sans 3', sans-serif;
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  margin: 0 0 2.5rem;
+  font-weight: 400;
+}
+
+h2 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin: 3rem 0 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--accent);
+}
+
+h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 2rem 0 0.6rem;
+  color: var(--accent);
+}
+
+p { margin: 0 0 1rem; }
+
+.version-badge {
+  display: inline-block;
+  font-family: 'Source Code Pro', monospace;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--accent);
+  color: var(--bg);
+  padding: 0.2em 0.7em;
+  border-radius: 3px;
+  margin-bottom: 0.7rem;
+}
+
+code {
+  font-family: 'Source Code Pro', 'Consolas', monospace;
+  font-size: 0.88em;
+  background: var(--accent-dim);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+}
+
+pre {
+  background: var(--bg-code);
+  color: var(--code-text);
+  font-family: 'Source Code Pro', 'Consolas', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  padding: 1.2rem 1.4rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1rem 0 1.5rem;
+  border: 1px solid var(--border);
+}
+
+pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+}
+
+figure {
+  margin: 1.5rem 0 2rem;
+  padding: 0;
+}
+
+figure svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+figcaption {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 0.6rem;
+  font-style: italic;
+}
+
+.step-grid {
+  display: grid;
+  grid-template-columns: 2.2rem 1fr;
+  gap: 0.6rem 1rem;
+  margin: 1rem 0 1.5rem;
+  align-items: start;
+}
+
+.step-num {
+  font-family: 'Playfair Display', serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--accent);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.step-text { margin: 0; }
+
+.mapping-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.mapping-table th {
+  font-family: 'Source Sans 3', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 0.5rem 0.8rem;
+  border-bottom: 2px solid var(--accent);
+}
+
+.mapping-table td {
+  padding: 0.45rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Source Code Pro', monospace;
+  font-size: 0.88rem;
+}
+
+.mapping-table tr:last-child td { border-bottom: none; }
+
+.mapping-table .char-col {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+.note-box {
+  background: var(--accent-dim);
+  border-left: 3px solid var(--accent);
+  padding: 0.8rem 1.2rem;
+  margin: 1.2rem 0;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.92rem;
+}
+
+.note-box strong {
+  color: var(--accent);
+}
+
+.security-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .security-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 1.8rem; }
+}
+
+.security-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem 1.2rem;
+}
+
+.security-card h4 {
+  font-family: 'Source Sans 3', sans-serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+  color: var(--accent);
+}
+
+.security-card p {
+  font-size: 0.88rem;
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.worked-example {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.arrow-chain {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.8rem 0;
+  font-family: 'Source Code Pro', monospace;
+  font-size: 0.88rem;
+}
+
+.arrow-chain .val {
+  background: var(--accent-dim);
+  padding: 0.25em 0.6em;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+
+.arrow-chain .arr {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.toc {
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.2rem 1.5rem;
+  margin: 0 0 2.5rem;
+}
+
+.toc-title {
+  font-family: 'Source Sans 3', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  margin: 0 0 0.6rem;
+}
+
+.toc ol {
+  margin: 0;
+  padding-left: 1.4rem;
+  list-style: decimal;
+}
+
+.toc li {
+  margin: 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+.toc a {
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.2s;
+}
+
+.toc a:hover { border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<div class="version-badge">v4.0 Steganographic</div>
+<h1>Chess Cipher</h1>
+<p class="subtitle">A steganographic encryption system that hides messages inside realistic chess board images, with the cipher encoded in the filename as algebraic move notation.</p>
+
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <ol>
+    <li><a href="#overview">System Overview</a></li>
+    <li><a href="#mapping">The Character Map</a></li>
+    <li><a href="#board">Board Generation</a></li>
+    <li><a href="#filename">The Filename Cipher</a></li>
+    <li><a href="#decryption">Decryption Process</a></li>
+    <li><a href="#security">Security Properties</a></li>
+    <li><a href="#example">Worked Example</a></li>
+  </ol>
+</nav>
+
+<h2 id="overview">1. System Overview</h2>
+
+<p>Chess Cipher is a steganographic system — it hides information in plain sight. A message is transformed into a chess board image that looks like a screenshot from a real game. The actual encrypted data lives in the <strong>filename</strong>, formatted as standard chess algebraic notation (PGN-style). An observer sees a chess game image with a game-notation filename. Only someone with access to this script can recover the original message.</p>
+
+<p>The system operates on two layers of concealment:</p>
+
+<div class="step-grid">
+  <div class="step-num">1</div>
+  <div class="step-text"><strong>Visual layer</strong> — The board image contains the message pieces mixed with decoy pieces, making it impossible to distinguish signal from noise just by looking at it.</div>
+  <div class="step-num">2</div>
+  <div class="step-text"><strong>Notation layer</strong> — The filename encodes the ordered sequence of squares that map back to characters. It looks like a standard chess game record.</div>
+</div>
+
+<figure>
+  <svg viewBox="0 0 680 200" role="img" aria-label="Encryption flow: plaintext message passes through character mapping to produce a square sequence, which generates both a board image with decoys and a PGN-style filename.">
+    <rect x="10" y="60" width="110" height="70" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <text x="65" y="90" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="12" font-weight="700" fill="currentColor">Plaintext</text>
+    <text x="65" y="108" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="11" fill="currentColor">"HELLO"</text>
+
+    <rect x="170" y="60" width="130" height="70" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <text x="235" y="86" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="12" font-weight="700" fill="currentColor">Character Map</text>
+    <text x="235" y="104" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="10" fill="currentColor">SHA-256 scramble</text>
+    <text x="235" y="118" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="10" fill="currentColor">char → square</text>
+
+    <rect x="350" y="60" width="120" height="70" rx="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <text x="410" y="90" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="12" font-weight="700" fill="currentColor">Square Sequence</text>
+    <text x="410" y="108" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="11" fill="currentColor">e2 e5 h8 h8 a5</text>
+
+    <rect x="530" y="20" width="140" height="55" rx="5" fill="none" stroke="#C8A94E" stroke-width="1.8"/>
+    <text x="600" y="44" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="12" font-weight="700" fill="#C8A94E">Board Image</text>
+    <text x="600" y="60" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="10" fill="currentColor">+ decoy pieces</text>
+
+    <rect x="530" y="115" width="140" height="55" rx="5" fill="none" stroke="#C8A94E" stroke-width="1.8"/>
+    <text x="600" y="138" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="12" font-weight="700" fill="#C8A94E">Filename</text>
+    <text x="600" y="155" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="9.5" fill="currentColor">1.e2_Qe5_2.Rxh8…</text>
+
+    <line x1="120" y1="95" x2="165" y2="95" stroke="currentColor" stroke-width="1.5"/>
+    <polygon points="165,90 175,95 165,100" fill="currentColor"/>
+
+    <line x1="300" y1="95" x2="345" y2="95" stroke="currentColor" stroke-width="1.5"/>
+    <polygon points="345,90 355,95 345,100" fill="currentColor"/>
+
+    <line x1="470" y1="80" x2="525" y2="52" stroke="#C8A94E" stroke-width="1.5"/>
+    <polygon points="522,46 532,50 523,56" fill="#C8A94E"/>
+
+    <line x1="470" y1="110" x2="525" y2="137" stroke="#C8A94E" stroke-width="1.5"/>
+    <polygon points="522,132 532,139 523,143" fill="#C8A94E"/>
+  </svg>
+  <figcaption>Encryption flow — the message passes through a scrambled mapping to produce a square sequence, which splits into two outputs: a disguised board image and a PGN-notation filename that carries the actual cipher.</figcaption>
+</figure>
+
+<h2 id="mapping">2. The Character Map</h2>
+
+<p>The cipher supports 37 characters:</p>
+<pre><code>A B C D E F G H I J K L M N O P Q R S T U V W X Y Z [space] 0 1 2 3 4 5 6 7 8 9</code></pre>
+
+<p>Each character is assigned to exactly one of the 64 squares on a chess board. The assignment is <strong>not sequential</strong> — it uses a keyed permutation based on SHA-256 hashing to scramble the mapping.</p>
+
+<h3>How the Scramble Works</h3>
+
+<p>All 64 squares are generated in natural order (<code>a1, b1, c1 … h8</code>), then sorted by the SHA-256 hash of a fixed cipher seed concatenated with each square name:</p>
+
+<pre><code>CIPHER_SEED = b'chess_cipher_v4'
+
+sorted_squares = sort(all_64_squares,
+    key = SHA-256(CIPHER_SEED + square_name)
+)</code></pre>
+
+<p>The first 37 squares in this sorted list are assigned to the 37 characters in order. Because SHA-256 produces uniformly distributed hashes, the resulting mapping scatters characters across the board with no discernible pattern.</p>
+
+<div class="note-box">
+  <strong>Why not sequential?</strong> A sequential mapping (A=a1, B=b1, C=c1…) would be trivially reversible by anyone who guesses the scheme. The SHA-256 scramble means an attacker would need to know both the algorithm and the exact cipher seed to reconstruct the mapping.
+</div>
+
+<h3>Example Mapping (partial)</h3>
+
+<p>With the seed <code>chess_cipher_v4</code>, the mapping produces assignments like:</p>
+
+<table class="mapping-table">
+  <thead>
+    <tr><th>Character</th><th>Square</th><th>SHA-256 sort position</th></tr>
+  </thead>
+  <tbody>
+    <tr><td class="char-col">H</td><td>e2</td><td>8th in sorted order</td></tr>
+    <tr><td class="char-col">E</td><td>e5</td><td>5th in sorted order</td></tr>
+    <tr><td class="char-col">L</td><td>h8</td><td>12th in sorted order</td></tr>
+    <tr><td class="char-col">O</td><td>a5</td><td>15th in sorted order</td></tr>
+    <tr><td class="char-col">[space]</td><td>(assigned)</td><td>27th in sorted order</td></tr>
+  </tbody>
+</table>
+
+<p>The mapping is <strong>deterministic</strong> — the same seed always produces the same permutation, regardless of platform or Python version, because it relies only on SHA-256 (a standardized algorithm) and a lexicographic sort.</p>
+
+<h2 id="board">3. Board Generation</h2>
+
+<p>The board image is designed to look like a real mid-game chess position. It uses piece assets from the <code>color/</code> folder, upscaled with Pygame's <code>smoothscale</code> for clean rendering. This involves four stages:</p>
+
+<h3>Stage 1: Message Pieces</h3>
+
+<p>Each unique square from the encrypted message gets a piece placed on it. The piece type is chosen based on the square's position on the board for realism:</p>
+
+<div class="step-grid">
+  <div class="step-num">·</div>
+  <div class="step-text"><strong>Ranks 1 and 8</strong> (back ranks) — pieces follow the standard opening layout: rook, knight, bishop, queen, king, bishop, knight, rook.</div>
+  <div class="step-num">·</div>
+  <div class="step-text"><strong>Ranks 2 and 7</strong> (pawn ranks) — 75% chance of a pawn, 25% chance of a knight or bishop (as if a pawn was captured and replaced).</div>
+  <div class="step-num">·</div>
+  <div class="step-text"><strong>Ranks 3–6</strong> (middle board) — weighted distribution favoring pawns (50%), with knights (15%), bishops (15%), rooks (12%), and queens (8%).</div>
+</div>
+
+<p>Piece colors alternate with the message sequence: even-indexed characters get white pieces, odd-indexed get black. This matches PGN convention where white moves first.</p>
+
+<div class="note-box">
+  <strong>No message kings.</strong> King pieces are never assigned to message squares to avoid conflicts with the guaranteed king placement in Stage 2.
+</div>
+
+<h3>Stage 2: Guaranteed Kings</h3>
+
+<p>A real chess game always has both kings. The system checks whether the message pieces already include a white king and a black king. For each missing king:</p>
+
+<div class="step-grid">
+  <div class="step-num">1</div>
+  <div class="step-text">Try preferred king squares: <code>g1, e1, f1, c1, h1</code> for white; <code>g8, e8, f8, c8, h8</code> for black (common king positions in mid-game).</div>
+  <div class="step-num">2</div>
+  <div class="step-text">If all preferred squares are occupied, fall back to any free square on ranks 1–3 (white) or 6–8 (black).</div>
+</div>
+
+<h3>Stage 3: Decoy Pieces</h3>
+
+<p>This is the core of the steganographic disguise. The system adds <strong>22–30 total pieces</strong> on the board (a realistic mid-game count), filling empty squares with fake pieces that serve no cryptographic purpose but make the board look genuine.</p>
+
+<p>Decoy placement follows three rules:</p>
+
+<div class="step-grid">
+  <div class="step-num">1</div>
+  <div class="step-text"><strong>Color balance:</strong> If one side has more than 2 extra pieces, the next decoy favors the underrepresented side. Otherwise, color follows positional logic (white pieces cluster on ranks 1–3, black on ranks 6–8, mixed in the center).</div>
+  <div class="step-num">2</div>
+  <div class="step-text"><strong>No extra kings:</strong> Decoys are never kings (a position with 3 kings is an instant tell).</div>
+  <div class="step-num">3</div>
+  <div class="step-text"><strong>Pawn placement rules:</strong> Pawns never appear on ranks 1 or 8 (impossible in standard chess without promotion context). If a pawn is randomly assigned to a back rank, it gets replaced with a knight, bishop, or rook.</div>
+</div>
+
+<h3>Stage 4: Visual Polish</h3>
+
+<p>Two squares are highlighted in yellow-green to simulate a "last move" indicator, matching the style of popular chess platforms like lichess.org. Unlike a naive random selection, the system generates <strong>legally valid move highlights</strong>:</p>
+
+<div class="step-grid">
+  <div class="step-num">1</div>
+  <div class="step-text">Pick a random occupied square as the "destination" (where the piece landed).</div>
+  <div class="step-num">2</div>
+  <div class="step-text">Compute all squares that piece could have legally moved <em>from</em>, based on its type: knights use L-shaped offsets, bishops use diagonals, rooks use straights, pawns use forward/capture directions, etc.</div>
+  <div class="step-num">3</div>
+  <div class="step-text">Filter to only empty squares (the piece is no longer there).</div>
+  <div class="step-num">4</div>
+  <div class="step-text">Highlight the destination and one valid origin. If no valid origin exists for that piece, try another piece.</div>
+</div>
+
+<p>This means a highlighted knight will always show a plausible L-shaped move, a pawn will show a one- or two-square advance or diagonal capture, and sliding pieces will show movement along their correct lines. A chess player examining the board will see a believable last move.</p>
+
+<p>Coordinate labels are drawn inside the edge squares, with color-matched text that contrasts with each square's shade.</p>
+
+<p>All randomness in stages 1–4 uses a seeded PRNG derived from the <strong>SHA-256 hash of the message text</strong>. This means the same message always produces the identical board — encryption is fully reproducible.</p>
+
+<h2 id="filename">4. The Filename Cipher</h2>
+
+<p>The filename is where the actual encrypted information lives. It is formatted as a PGN-style (Portable Game Notation) move sequence — the standard format used worldwide to record chess games.</p>
+
+<h3>Building the Notation</h3>
+
+<p>For each character in the message (in order), the system looks up which piece was placed on that character's square and builds a chess move string:</p>
+
+<figure>
+  <svg viewBox="0 0 600 170" role="img" aria-label="Move notation construction: piece prefix from piece type, optional capture x from random chance, the target square from the mapping, and optional check symbol, combined into the move string.">
+    <rect x="20" y="35" width="120" height="50" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+    <text x="80" y="56" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="11" font-weight="700" fill="currentColor">Piece Prefix</text>
+    <text x="80" y="72" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="11" fill="currentColor">N, B, R, Q, K</text>
+
+    <rect x="160" y="35" width="100" height="50" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+    <text x="210" y="56" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="11" font-weight="700" fill="currentColor">Capture?</text>
+    <text x="210" y="72" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="11" fill="currentColor">x (20%)</text>
+
+    <rect x="280" y="35" width="110" height="50" rx="4" fill="none" stroke="#C8A94E" stroke-width="1.8"/>
+    <text x="335" y="56" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="11" font-weight="700" fill="#C8A94E">Target Square</text>
+    <text x="335" y="72" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="11" fill="#C8A94E">e5, h8, a3…</text>
+
+    <rect x="410" y="35" width="90" height="50" rx="4" fill="none" stroke="currentColor" stroke-width="1.3"/>
+    <text x="455" y="56" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="11" font-weight="700" fill="currentColor">Check?</text>
+    <text x="455" y="72" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="11" fill="currentColor">+ (6%)</text>
+
+    <line x1="80" y1="85" x2="80" y2="110" stroke="currentColor" stroke-width="1"/>
+    <line x1="210" y1="85" x2="210" y2="110" stroke="currentColor" stroke-width="1"/>
+    <line x1="335" y1="85" x2="335" y2="110" stroke="currentColor" stroke-width="1"/>
+    <line x1="455" y1="85" x2="455" y2="110" stroke="currentColor" stroke-width="1"/>
+    <line x1="80" y1="110" x2="455" y2="110" stroke="currentColor" stroke-width="1"/>
+    <line x1="267" y1="110" x2="267" y2="125" stroke="currentColor" stroke-width="1"/>
+    <polygon points="262,125 267,135 272,125" fill="currentColor"/>
+
+    <rect x="200" y="135" width="135" height="30" rx="4" fill="none" stroke="#C8A94E" stroke-width="1.5"/>
+    <text x="267" y="155" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="13" font-weight="500" fill="#C8A94E">N x e5 +</text>
+  </svg>
+  <figcaption>Move notation assembly — the piece type determines the prefix letter, random chance adds capture and check symbols for realism, and the target square (the only part that matters for decryption) is always the last two characters.</figcaption>
+</figure>
+
+<p>The notation prefixes follow standard chess algebraic notation:</p>
+
+<table class="mapping-table">
+  <thead>
+    <tr><th>Piece</th><th>Prefix</th><th>Example Move</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>King</td><td class="char-col">K</td><td>Kg1</td></tr>
+    <tr><td>Queen</td><td class="char-col">Q</td><td>Qd7, Qxd7+</td></tr>
+    <tr><td>Rook</td><td class="char-col">R</td><td>Re1, Rxe1</td></tr>
+    <tr><td>Bishop</td><td class="char-col">B</td><td>Bb5, Bxf7+</td></tr>
+    <tr><td>Knight</td><td class="char-col">N</td><td>Nf3, Nxf3</td></tr>
+    <tr><td>Pawn</td><td class="char-col">(none)</td><td>e4, d5</td></tr>
+  </tbody>
+</table>
+
+<h3>Filename Formatting</h3>
+
+<p>Moves are paired and numbered in PGN style: white's move follows the move number (with a dot), black's move follows without a number. Pairs are separated by underscores (since spaces aren't valid in filenames):</p>
+
+<pre><code>Standard PGN:   1. e4 e5 2. Nf3 Nc6 3. Bb5 a6
+Filename form:  1.e4_e5_2.Nf3_Nc6_3.Bb5_a6.png</code></pre>
+
+<p>If the resulting filename exceeds 240 characters (for very long messages), the system falls back to a compact format without move numbers: <code>e4_e5_Nf3_Nc6_Bb5_a6.png</code>. The parser handles both formats.</p>
+
+<h2 id="decryption">5. Decryption Process</h2>
+
+<p>Decryption is the reverse path. The filename is the only input — the board image itself is never analyzed.</p>
+
+<div class="step-grid">
+  <div class="step-num">1</div>
+  <div class="step-text"><strong>Strip the extension:</strong> Remove <code>.png</code> from the filename.</div>
+  <div class="step-num">2</div>
+  <div class="step-text"><strong>Tokenize:</strong> Split the remaining string on underscores (<code>_</code>).</div>
+  <div class="step-num">3</div>
+  <div class="step-text"><strong>Clean each token:</strong> Remove the move number prefix (regex <code>^\d+\.</code>) and trailing check/checkmate symbols (<code>+</code>, <code>#</code>).</div>
+  <div class="step-num">4</div>
+  <div class="step-text"><strong>Extract the square:</strong> Take the <strong>last two characters</strong> of each cleaned token. This always yields the target square regardless of piece prefix or capture notation.</div>
+  <div class="step-num">5</div>
+  <div class="step-text"><strong>Reverse the mapping:</strong> Look up each square in the inverse character map (same SHA-256 scramble, reversed) to recover the original character.</div>
+</div>
+
+<figure>
+  <svg viewBox="0 0 620 160" role="img" aria-label="Parsing example: the token Rxh8 is decomposed into the square h8, which maps back to the letter L.">
+    <text x="10" y="30" font-family="'Source Code Pro', monospace" font-size="13" font-weight="500" fill="currentColor">2.Rxh8</text>
+
+    <line x1="75" y1="25" x2="110" y2="25" stroke="currentColor" stroke-width="1.2"/>
+    <polygon points="110,21 118,25 110,29" fill="currentColor"/>
+    <text x="95" y="14" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="9" fill="currentColor">strip ^\d+\.</text>
+
+    <text x="125" y="30" font-family="'Source Code Pro', monospace" font-size="13" font-weight="500" fill="currentColor">Rxh8</text>
+
+    <line x1="175" y1="25" x2="210" y2="25" stroke="currentColor" stroke-width="1.2"/>
+    <polygon points="210,21 218,25 210,29" fill="currentColor"/>
+    <text x="195" y="14" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="9" fill="currentColor">strip +#</text>
+
+    <text x="225" y="30" font-family="'Source Code Pro', monospace" font-size="13" font-weight="500" fill="currentColor">Rxh8</text>
+
+    <line x1="275" y1="25" x2="310" y2="25" stroke="currentColor" stroke-width="1.2"/>
+    <polygon points="310,21 318,25 310,29" fill="currentColor"/>
+    <text x="295" y="14" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="9" fill="currentColor">last 2 chars</text>
+
+    <rect x="325" y="10" width="50" height="30" rx="3" fill="none" stroke="#C8A94E" stroke-width="1.5"/>
+    <text x="350" y="30" text-anchor="middle" font-family="'Source Code Pro', monospace" font-size="13" font-weight="600" fill="#C8A94E">h8</text>
+
+    <line x1="375" y1="25" x2="410" y2="25" stroke="#C8A94E" stroke-width="1.5"/>
+    <polygon points="410,21 418,25 410,29" fill="#C8A94E"/>
+    <text x="395" y="14" text-anchor="middle" font-family="'Source Sans 3', sans-serif" font-size="9" fill="#C8A94E">map</text>
+
+    <rect x="425" y="10" width="40" height="30" rx="3" fill="#C8A94E" stroke="none"/>
+    <text x="445" y="31" text-anchor="middle" font-family="'Playfair Display', serif" font-size="16" font-weight="700" fill="#1A1612">L</text>
+
+    <text x="10" y="85" font-family="'Source Sans 3', sans-serif" font-size="11" font-weight="600" fill="currentColor">Full parse:</text>
+    <text x="10" y="110" font-family="'Source Code Pro', monospace" font-size="11" fill="currentColor">1.e2_Qe5_2.Rxh8_Rh8_3.a5</text>
+    <line x1="10" y1="120" x2="230" y2="120" stroke="currentColor" stroke-width="0.5"/>
+    <text x="10" y="140" font-family="'Source Code Pro', monospace" font-size="11" fill="currentColor">  e2  e5    h8   h8   a5</text>
+    <line x1="10" y1="145" x2="230" y2="145" stroke="currentColor" stroke-width="0.5"/>
+    <text x="10" y="157" font-family="'Source Code Pro', monospace" font-size="11" font-weight="500" fill="#C8A94E">   H   E     L    L    O</text>
+  </svg>
+  <figcaption>Parsing pipeline — each token is cleaned to reveal the target square, which is then mapped back to its character. Piece prefixes, captures, and check symbols are noise that the parser discards.</figcaption>
+</figure>
+
+<div class="note-box">
+  <strong>The board image is never read during decryption.</strong> The image serves only as visual camouflage. All information needed for decryption is contained in the filename. The image could be deleted or corrupted and the message would still be recoverable from the filename alone.
+</div>
+
+<h2 id="security">6. Security Properties</h2>
+
+<div class="security-grid">
+  <div class="security-card">
+    <h4>Visual Steganography</h4>
+    <p>The board looks like a real chess position with 22–30 pieces. An observer cannot tell which pieces encode the message and which are decoys — both are standard chess pieces in valid positions.</p>
+  </div>
+  <div class="security-card">
+    <h4>Notation Camouflage</h4>
+    <p>The filename follows standard PGN algebraic notation with piece prefixes, captures, and check marks. It reads as a normal chess game record, not an encoded message.</p>
+  </div>
+  <div class="security-card">
+    <h4>Scrambled Mapping</h4>
+    <p>The character-to-square mapping is permuted by SHA-256 with a fixed seed. Without the seed, the 64! possible orderings make brute-force impractical.</p>
+  </div>
+  <div class="security-card">
+    <h4>Reproducibility</h4>
+    <p>The same message always generates the same board (via a SHA-256-seeded PRNG), so the sender and receiver can independently verify outputs.</p>
+  </div>
+</div>
+
+<h3>Known Limitations</h3>
+
+<p>This is an obfuscation system, not a cryptographically secure cipher. It is designed to hide messages from casual observers, not to resist determined cryptanalysis:</p>
+
+<div class="step-grid">
+  <div class="step-num">·</div>
+  <div class="step-text"><strong>Fixed seed:</strong> The cipher seed is hardcoded in the script. Anyone with access to the source code can reconstruct the mapping. For stronger security, make the seed a shared secret between sender and receiver.</div>
+  <div class="step-num">·</div>
+  <div class="step-text"><strong>Frequency analysis:</strong> Repeated characters map to the same square, so repeated squares in the filename reveal repeated characters. A long message could be vulnerable to frequency analysis.</div>
+  <div class="step-num">·</div>
+  <div class="step-text"><strong>Limited character set:</strong> Only 37 characters are supported (A–Z, space, 0–9). This limits the messages that can be encoded.</div>
+</div>
+
+<h2 id="example">7. Worked Example</h2>
+
+<div class="worked-example">
+  <h3 style="margin-top: 0;">Encrypting "HELLO"</h3>
+
+  <p><strong>Step 1 — Character mapping</strong></p>
+  <p>Each character is looked up in the scrambled map:</p>
+
+  <div class="arrow-chain">
+    <span class="val">H</span><span class="arr">&#8594;</span><span class="val">e2</span>
+    <span style="width: 0.8rem"></span>
+    <span class="val">E</span><span class="arr">&#8594;</span><span class="val">e5</span>
+    <span style="width: 0.8rem"></span>
+    <span class="val">L</span><span class="arr">&#8594;</span><span class="val">h8</span>
+    <span style="width: 0.8rem"></span>
+    <span class="val">L</span><span class="arr">&#8594;</span><span class="val">h8</span>
+    <span style="width: 0.8rem"></span>
+    <span class="val">O</span><span class="arr">&#8594;</span><span class="val">a5</span>
+  </div>
+
+  <p>Square sequence: <code>e2, e5, h8, h8, a5</code></p>
+  <p>Note that L appears twice and produces the same square <code>h8</code> both times.</p>
+
+  <p><strong>Step 2 — Piece assignment</strong></p>
+  <p>A seeded RNG (seed = SHA-256 of "HELLO") assigns pieces:</p>
+
+  <table class="mapping-table" style="max-width: 420px;">
+    <thead>
+      <tr><th>Square</th><th>Color</th><th>Piece</th><th>Notation</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>e2</td><td>white (idx 0)</td><td>bishop</td><td>e2</td></tr>
+      <tr><td>e5</td><td>black (idx 1)</td><td>queen</td><td>Qe5</td></tr>
+      <tr><td>h8</td><td>white (idx 2)</td><td>rook</td><td>Rxh8</td></tr>
+      <tr><td>a5</td><td>black (idx 4)</td><td>rook</td><td>a5</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>Step 3 — Filename construction</strong></p>
+  <p>Moves are formatted as PGN with move numbers:</p>
+  <pre><code>1.e2_Qe5_2.Rxh8_Rh8_3.a5.png</code></pre>
+
+  <p><strong>Step 4 — Board generation</strong></p>
+  <p>The system places the 4 unique message pieces on their squares, adds both kings (white on g1, black on g8), then fills with ~20 decoy pieces. Two squares are highlighted as a "last move" — computed from the actual movement rules of the piece on the destination square, so the highlight always represents a legal chess move. The result is saved as the filename above.</p>
+
+  <p><strong>Decryption:</strong> Copy <code>1.e2_Qe5_2.Rxh8_Rh8_3.a5</code> and paste into the script's decrypt mode. It parses out squares <code>e2 &#8594; H</code>, <code>e5 &#8594; E</code>, <code>h8 &#8594; L</code>, <code>h8 &#8594; L</code>, <code>a5 &#8594; O</code> and outputs <code>HELLO</code>.</p>
+</div>
+
+<h2 style="border-bottom-color: var(--text-secondary);">Technical Reference</h2>
+
+<table class="mapping-table">
+  <thead>
+    <tr><th>Parameter</th><th>Value</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Supported characters</td><td><code>A-Z, space, 0-9</code> (37 total)</td></tr>
+    <tr><td>Board resolution</td><td>860 x 860 px (100px squares + 30px margin)</td></tr>
+    <tr><td>Piece rendering</td><td>Python: Pygame smoothscale from pixel assets; Web: Staunton SVG vectors</td></tr>
+    <tr><td>Piece count range</td><td>22-30 (message + decoys)</td></tr>
+    <tr><td>Piece limits per color</td><td>Max 2 rooks, 2 bishops, 2 knights, 1 queen, 8 pawns, 1 king</td></tr>
+    <tr><td>Last-move highlight</td><td>Legal move simulation — origin computed from piece movement rules</td></tr>
+    <tr><td>Interactive tool</td><td><code>index.html</code> — encrypt, decrypt, free board with drag-and-drop</td></tr>
+    <tr><td>Cipher seed</td><td><code>chess_cipher_v4</code></td></tr>
+    <tr><td>Hash algorithm</td><td>SHA-256 (mapping permutation + board seed)</td></tr>
+    <tr><td>PRNG</td><td>Mersenne Twister, seeded per-message</td></tr>
+    <tr><td>Max message length</td><td>~50 characters (limited by filename length)</td></tr>
+    <tr><td>Filename format</td><td>PGN-style, compact fallback &gt;240 chars</td></tr>
+  </tbody>
+</table>
+
+</body>
+</html>

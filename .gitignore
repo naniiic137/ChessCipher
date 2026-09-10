@@ -1,0 +1,27 @@
+# Generated board images (contain encrypted messages)
+*.png
+# But keep the piece assets used by main.py
+!color/*.png
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# SVG pieces module (generated, not needed for core functionality)
+pieces_svg.js
+
+# Temp / test files
+cipher_test_vectors.json
