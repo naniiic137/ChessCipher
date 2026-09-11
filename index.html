@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chess Cipher v4.0</title>
+<title>Chess Cipher v5.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.11.0/sha256.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,7 +19,7 @@ body {
 .app {
   display: flex;
   gap: 24px;
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 24px;
   align-items: flex-start;
@@ -27,7 +27,7 @@ body {
 
 /* ─── Sidebar ─── */
 .sidebar {
-  width: 300px;
+  width: 320px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -35,42 +35,58 @@ body {
 }
 
 .logo {
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 800;
   color: #e0ddd5;
   letter-spacing: -0.5px;
   padding: 4px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  font-size: 28px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
 .logo span { color: #81b64c; }
 
 .panel {
-  background: #302e2b;
-  border-radius: 10px;
-  padding: 16px;
+  background: linear-gradient(145deg, #33302d, #2c2a27);
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
 }
 
 .tabs {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   margin-bottom: 14px;
 }
 
 .tab {
   flex: 1;
-  padding: 8px 4px;
+  padding: 9px 4px;
   border: none;
-  border-radius: 6px;
-  background: #3a3733;
+  border-radius: 8px;
+  background: transparent;
   color: #9b9892;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  position: relative;
 }
 
-.tab:hover { background: #454340; color: #c8c5be; }
-.tab.active { background: #81b64c; color: #fff; }
+.tab:hover { background: rgba(255,255,255,0.06); color: #c8c5be; }
+.tab.active {
+  background: linear-gradient(135deg, #81b64c 0%, #6fa33e 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(129,182,76,0.35);
+}
 
 .mode-section { display: none; }
 .mode-section.active { display: block; }
@@ -87,21 +103,22 @@ label {
 
 input[type="text"], textarea {
   width: 100%;
-  background: #222;
-  border: 1px solid #444;
-  border-radius: 6px;
+  background: #1a1816;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
   color: #e0ddd5;
   font-family: 'Consolas', 'SF Mono', monospace;
   font-size: 14px;
-  padding: 10px 12px;
+  padding: 11px 14px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: all 0.2s ease;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
 }
 
 input[type="text"]:focus, textarea:focus {
   border-color: #81b64c;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3), 0 0 0 3px rgba(129,182,76,0.12);
 }
-
 textarea { resize: vertical; min-height: 60px; }
 
 .btn {
@@ -109,49 +126,87 @@ textarea { resize: vertical; min-height: 60px; }
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 18px;
+  padding: 11px 18px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
   width: 100%;
   margin-top: 10px;
+  letter-spacing: 0.01em;
 }
 
-.btn-primary { background: #81b64c; color: #fff; }
-.btn-primary:hover { background: #6fa33e; }
-.btn-secondary { background: #3a3733; color: #c8c5be; }
-.btn-secondary:hover { background: #454340; }
+.btn-primary {
+  background: linear-gradient(135deg, #8ec455 0%, #6fa33e 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(129,182,76,0.3);
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #9bd060 0%, #7ab844 100%);
+  box-shadow: 0 4px 14px rgba(129,182,76,0.4);
+  transform: translateY(-1px);
+}
+.btn-primary:active { transform: translateY(0); box-shadow: 0 1px 4px rgba(129,182,76,0.3); }
+.btn-secondary {
+  background: rgba(255,255,255,0.06);
+  color: #c8c5be;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.14);
+  transform: translateY(-1px);
+}
+.btn-secondary:active { transform: translateY(0); }
+.btn-danger {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(192,57,43,0.3);
+}
+.btn-danger:hover { box-shadow: 0 4px 14px rgba(192,57,43,0.4); transform: translateY(-1px); }
+
+.btn-share {
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(52,152,219,0.3);
+}
+.btn-share:hover {
+  box-shadow: 0 4px 14px rgba(52,152,219,0.4);
+  transform: translateY(-1px);
+}
 
 .result-box {
   margin-top: 12px;
-  padding: 10px 12px;
-  background: #222;
-  border-radius: 6px;
-  border: 1px solid #444;
+  padding: 12px 14px;
+  background: #1a1816;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
   font-family: 'Consolas', 'SF Mono', monospace;
   font-size: 13px;
   word-break: break-all;
   min-height: 36px;
   position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
 }
 
 .result-box .copy-btn {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  padding: 3px 8px;
+  top: 8px;
+  right: 8px;
+  padding: 4px 10px;
   font-size: 11px;
-  background: #3a3733;
+  background: rgba(255,255,255,0.08);
   color: #9b9892;
-  border: none;
-  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 5px;
   cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 600;
 }
 
-.result-box .copy-btn:hover { background: #81b64c; color: #fff; }
+.result-box .copy-btn:hover { background: #81b64c; color: #fff; border-color: #81b64c; }
 
 .toggle-row {
   display: flex;
@@ -162,16 +217,17 @@ textarea { resize: vertical; min-height: 60px; }
 
 .toggle {
   position: relative;
-  width: 40px;
-  height: 22px;
-  background: #3a3733;
-  border-radius: 11px;
+  width: 42px;
+  height: 24px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 12px;
   cursor: pointer;
   border: none;
-  transition: background 0.2s;
+  transition: all 0.25s ease;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
 }
 
-.toggle.on { background: #81b64c; }
+.toggle.on { background: #81b64c; box-shadow: 0 0 8px rgba(129,182,76,0.3); }
 
 .toggle::after {
   content: '';
@@ -193,21 +249,6 @@ textarea { resize: vertical; min-height: 60px; }
   cursor: pointer;
 }
 
-.free-readout {
-  margin-top: 10px;
-  padding: 10px 12px;
-  background: #222;
-  border-radius: 6px;
-  border: 1px solid #444;
-  font-family: 'Consolas', monospace;
-  font-size: 14px;
-  min-height: 40px;
-  color: #81b64c;
-  word-break: break-all;
-}
-
-.free-readout.empty { color: #666; font-style: italic; }
-
 .info-text {
   font-size: 12px;
   color: #777;
@@ -215,12 +256,537 @@ textarea { resize: vertical; min-height: 60px; }
   line-height: 1.5;
 }
 
+/* ─── Free Board Char Bar ─── */
+.free-char-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 10px 0;
+  min-height: 28px;
+}
+
+.char-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 7px 4px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  min-width: 34px;
+}
+
+.char-chip:hover { background: rgba(129,182,76,0.15); border-color: rgba(129,182,76,0.3); transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+
+.char-chip-letter {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0ddd5;
+  font-family: 'Consolas', monospace;
+  line-height: 1.2;
+}
+
+.char-chip-sq {
+  font-size: 9px;
+  color: #777;
+  font-family: 'Consolas', monospace;
+}
+
+.char-chip-del {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #fff;
+  background: #c0392b;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+  line-height: 1;
+}
+
+.char-chip:hover .char-chip-del {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.free-readout {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: #1a1816;
+  border-radius: 8px;
+  border: 1px solid rgba(129,182,76,0.15);
+  font-family: 'Consolas', monospace;
+  font-size: 15px;
+  font-weight: 600;
+  min-height: 44px;
+  color: #81b64c;
+  word-break: break-all;
+  letter-spacing: 0.5px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.free-readout.empty { color: #555; font-style: italic; font-weight: 400; border-color: rgba(255,255,255,0.06); }
+
+/* ─── Message Editor ─── */
+.msg-editor {
+  background: linear-gradient(145deg, #33302d, #2c2a27);
+  border-radius: 12px;
+  padding: 14px 16px;
+  width: 100%;
+  max-width: 590px;
+  margin-top: 12px;
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+
+.msg-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.msg-editor-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9b9892;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.msg-editor-count {
+  font-size: 11px;
+  color: #81b64c;
+  font-weight: 600;
+  background: rgba(129,182,76,0.12);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.msg-editor-list {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 6px 2px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #555 #2a2826;
+}
+
+.msg-editor-list::-webkit-scrollbar { height: 6px; }
+.msg-editor-list::-webkit-scrollbar-track { background: #2a2826; border-radius: 3px; }
+.msg-editor-list::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+.msg-editor-list::-webkit-scrollbar-thumb:hover { background: #777; }
+
+.msg-editor-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  width: 56px;
+  padding: 6px 4px 5px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 8px;
+  cursor: default;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.msg-editor-item:hover { background: rgba(255,255,255,0.08); transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+.msg-editor-piece {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.msg-editor-piece svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.2));
+}
+
+.msg-editor-char {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e0ddd5;
+  line-height: 1.2;
+  font-family: 'Consolas', 'SF Mono', monospace;
+}
+
+.msg-editor-sq {
+  font-size: 9px;
+  color: #777;
+  font-family: 'Consolas', monospace;
+  margin-top: 1px;
+}
+
+.msg-editor-del {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #c0392b;
+  background: rgba(192,57,43,0.1);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.msg-editor-item:hover .msg-editor-del { opacity: 1; }
+.msg-editor-del:hover { background: rgba(192,57,43,0.3); color: #e74c3c; }
+
+.msg-editor-arrow {
+  color: #555;
+  font-size: 12px;
+  flex-shrink: 0;
+  user-select: none;
+  line-height: 1;
+}
+
+.msg-editor-readout {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #222;
+  border-radius: 6px;
+  border: 1px solid #444;
+  font-family: 'Consolas', 'SF Mono', monospace;
+  font-size: 14px;
+  color: #81b64c;
+  word-break: break-all;
+  letter-spacing: 0.5px;
+}
+
+.msg-editor-readout-label {
+  font-size: 10px;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+/* ─── 1v1 Mode ─── */
+.v1-player-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.v1-ptab {
+  flex: 1;
+  padding: 9px 4px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: #9b9892;
+}
+
+.v1-ptab:hover { background: rgba(255,255,255,0.06); color: #c8c5be; }
+.v1-ptab.active-p1 {
+  background: linear-gradient(135deg, #81b64c, #6fa33e);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(129,182,76,0.35);
+}
+.v1-ptab.active-p2 {
+  background: linear-gradient(135deg, #e8a43a, #d4912e);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(232,164,58,0.35);
+}
+
+.v1-turn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.v1-turn-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: v1Pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes v1Pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+.v1-turn-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e0ddd5;
+}
+
+.v1-empty {
+  padding: 20px;
+  text-align: center;
+  color: #777;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.v1-msg {
+  padding: 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  border-left: 3px solid transparent;
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+
+.v1-msg:hover { background: rgba(255,255,255,0.05); }
+
+.v1-msg-p1 { border-left: 3px solid #81b64c; }
+.v1-msg-p2 { border-left: 3px solid #e8a43a; }
+
+.v1-msg-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.v1-player-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.v1-player-name { font-size: 13px; font-weight: 700; }
+.v1-msg-time { margin-left: auto; font-size: 11px; color: #777; }
+
+.v1-msg-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.v1-mini-pieces { font-size: 16px; letter-spacing: 1px; line-height: 1; }
+
+.v1-msg-chars {
+  font-size: 11px;
+  color: #777;
+  background: #302e2b;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.v1-msg-actions { display: flex; gap: 6px; margin-top: 6px; }
+
+.btn-v1 {
+  flex: 1;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.btn-v1-view { background: rgba(255,255,255,0.08); color: #c8c5be; border: 1px solid rgba(255,255,255,0.06); }
+.btn-v1-view:hover { background: rgba(255,255,255,0.14); transform: translateY(-1px); }
+.btn-v1-decode { background: linear-gradient(135deg, #81b64c, #6fa33e); color: #fff; }
+.btn-v1-decode:hover { box-shadow: 0 2px 8px rgba(129,182,76,0.3); transform: translateY(-1px); }
+.btn-v1-share { transition: all 0.2s ease; }
+.btn-v1-share:hover { box-shadow: 0 2px 8px rgba(52,152,219,0.3); transform: translateY(-1px); }
+
+.v1-decoded-reveal {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #222;
+  border-radius: 6px;
+  border: 1px solid #444;
+  font-family: 'Consolas', monospace;
+  font-size: 16px;
+  font-weight: 700;
+  color: #81b64c;
+  text-align: center;
+  animation: v1FadeIn 0.4s ease;
+}
+
+@keyframes v1FadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.v1-screen-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  animation: v1FadeIn 0.2s ease;
+}
+
+.v1-screen-box {
+  background: linear-gradient(145deg, #33302d, #2c2a27);
+  border-radius: 18px;
+  padding: 32px;
+  max-width: 460px;
+  width: 90vw;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+}
+
+.v1-screen-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #e0ddd5;
+  margin-bottom: 8px;
+}
+
+.v1-screen-sub {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 24px;
+}
+
+.v1-screen-btn {
+  padding: 12px 36px;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, #8ec455, #6fa33e);
+  color: #fff;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(129,182,76,0.35);
+}
+
+.v1-screen-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(129,182,76,0.45); }
+
+.v1-history { margin-top: 12px; max-height: 300px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #555 #2a2826; }
+
+/* ─── Piece Cipher ─── */
+.pc-visual {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.pc-pair {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 5px 7px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 8px;
+  min-width: 46px;
+  cursor: default;
+  transition: all 0.2s ease;
+}
+
+.pc-pair:hover { background: rgba(255,255,255,0.08); transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+
+.pc-icons {
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: 2px;
+}
+
+.pc-char {
+  font-size: 11px;
+  color: #81b64c;
+  font-weight: 700;
+  font-family: 'Consolas', monospace;
+  margin-top: 2px;
+}
+
+.pc-ref-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-top: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #555 #2a2826;
+}
+
+.pc-ref-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  background: #3a3733;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+.pc-ref-char {
+  font-weight: 700;
+  color: #e0ddd5;
+  font-family: 'Consolas', monospace;
+}
+
+.pc-ref-icons { font-size: 14px; line-height: 1.2; }
+
+.pc-ref-code {
+  font-size: 9px;
+  color: #777;
+  font-family: 'Consolas', monospace;
+}
+
+.pc-output-code {
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: #222;
+  border-radius: 6px;
+  border: 1px solid #444;
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  color: #e0ddd5;
+  word-break: break-all;
+  position: relative;
+}
+
 /* ─── Board Area ─── */
 .board-area {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .board-wrap {
@@ -234,8 +800,8 @@ textarea { resize: vertical; min-height: 60px; }
   grid-template-columns: repeat(8, 70px);
   grid-template-rows: repeat(8, 70px);
   border: 3px solid #1a1816;
-  border-radius: 3px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3);
 }
 
 .sq {
@@ -316,11 +882,12 @@ textarea { resize: vertical; min-height: 60px; }
 
 /* ─── Piece Tray ─── */
 .tray-section {
-  background: #302e2b;
-  border-radius: 10px;
+  background: linear-gradient(145deg, #33302d, #2c2a27);
+  border-radius: 12px;
   padding: 12px 16px;
   width: 100%;
-  max-width: 560px;
+  max-width: 590px;
+  border: 1px solid rgba(255,255,255,0.04);
 }
 
 .tray-title {
@@ -345,21 +912,19 @@ textarea { resize: vertical; min-height: 60px; }
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: grab;
-  background: #3a3733;
-  transition: background 0.15s, transform 0.1s;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.04);
+  transition: all 0.2s ease;
   touch-action: none;
 }
 
 .tray-piece svg { width: 34px; height: 34px; }
+.tray-piece:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.tray-piece:active { cursor: grabbing; transform: scale(1.05); }
 
-.tray-piece:hover { background: #504d49; transform: scale(1.08); }
-.tray-piece:active { cursor: grabbing; }
-
-.tray-sep {
-  width: 12px;
-}
+.tray-sep { width: 12px; }
 
 /* ─── Drag ghost ─── */
 .drag-ghost {
@@ -373,17 +938,81 @@ textarea { resize: vertical; min-height: 60px; }
 
 .drag-ghost svg { width: 56px; height: 56px; }
 
+/* ─── Animations ─── */
+.piece-animate {
+  animation: pieceAppear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes pieceAppear {
+  from { transform: scale(0) rotate(-45deg); opacity: 0; }
+  to { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* ─── Toast ─── */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: linear-gradient(135deg, #8ec455 0%, #6fa33e 100%);
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 4px 20px rgba(129,182,76,0.4);
+  backdrop-filter: blur(8px);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ─── Share Link ─── */
+.share-link-box {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #1a1816;
+  border-radius: 8px;
+  border: 1px solid rgba(52,152,219,0.2);
+  font-family: 'Consolas', monospace;
+  font-size: 11px;
+  color: #7fb3d8;
+  word-break: break-all;
+  position: relative;
+  overflow: hidden;
+}
+
+.share-link-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #3498db, #2980b9);
+}
+
 /* ─── Responsive ─── */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .app {
     flex-direction: column;
     align-items: center;
     padding: 16px;
   }
-  .sidebar { width: 100%; max-width: 560px; }
+  .sidebar { width: 100%; max-width: 590px; }
   .board { grid-template-columns: repeat(8, min(9vw, 70px)); grid-template-rows: repeat(8, min(9vw, 70px)); }
-  .sq { width: unset; height: unset; aspect-ratio: 1; }
-  .sq .piece { font-size: min(6vw, 50px); }
+  .sq { width: unset; height: unset; aspect-ratio: 1; font-size: min(6vw, 50px); }
+  .sq .piece { width: min(7vw, 56px); height: min(7vw, 56px); }
+  .pc-ref-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .tabs { flex-wrap: wrap; }
+  .tab { flex: 1 1 45%; }
 }
 </style>
 </head>
@@ -392,13 +1021,14 @@ textarea { resize: vertical; min-height: 60px; }
 <div class="app">
   <!-- Sidebar -->
   <div class="sidebar">
-    <div class="logo">Chess<span>Cipher</span> <small style="font-size:12px;color:#777">v4.0</small></div>
+    <div class="logo"><span class="logo-icon">♟</span>Chess<span>Cipher</span> <small style="font-size:11px;color:#666;font-weight:500">v5.0</small></div>
 
     <div class="panel">
       <div class="tabs">
         <button class="tab active" data-mode="encrypt">Encrypt</button>
         <button class="tab" data-mode="decrypt">Decrypt</button>
         <button class="tab" data-mode="free">Free Board</button>
+        <button class="tab" data-mode="1v1">1v1 Mode</button>
       </div>
 
       <!-- Encrypt -->
@@ -412,6 +1042,8 @@ textarea { resize: vertical; min-height: 60px; }
             <span id="enc-filename"></span>
             <button class="copy-btn" id="enc-copy">Copy</button>
           </div>
+          <button class="btn btn-share" id="enc-share">Share Link</button>
+          <div id="enc-share-box" style="display:none" class="share-link-box"></div>
         </div>
       </div>
 
@@ -428,11 +1060,42 @@ textarea { resize: vertical; min-height: 60px; }
 
       <!-- Free Board -->
       <div class="mode-section" id="sec-free">
-        <p class="info-text" style="margin-top:0;margin-bottom:10px">Drag pieces from the tray onto the board. The decoded message from placed pieces appears below.</p>
+        <label for="free-msg-input">Type Your Message</label>
+        <input type="text" id="free-msg-input" placeholder="Type here — pieces appear on the board..." maxlength="50" autocomplete="off">
+        <div class="free-char-bar" id="free-char-bar"></div>
         <label>Decoded from board</label>
-        <div class="free-readout empty" id="free-readout">Place pieces on the board...</div>
+        <div class="free-readout empty" id="free-readout">Start typing above...</div>
         <button class="btn btn-secondary" id="free-clear" style="margin-top:8px">Clear Board</button>
+        <p class="info-text">Type a message and pieces auto-place. Or drag pieces from the tray below the board.</p>
       </div>
+
+      <!-- 1v1 Mode -->
+      <div class="mode-section" id="sec-1v1">
+        <div class="v1-player-tabs">
+          <button class="v1-ptab active-p1" data-player="1">Player 1</button>
+          <button class="v1-ptab" data-player="2">Player 2</button>
+        </div>
+        <div id="v1-turn-container"></div>
+        <div id="v1-compose">
+          <label for="v1-msg-input">Your Secret Message</label>
+          <input type="text" id="v1-msg-input" placeholder="Type a message to encrypt..." maxlength="50" autocomplete="off">
+          <button class="btn btn-primary" id="v1-send">Send as Chess Board</button>
+        </div>
+        <div class="v1-history" id="v1-history"></div>
+        <p class="info-text">Send encrypted messages as chess positions. Share the link so the other person can see the board locally!</p>
+      </div>
+    </div>
+
+    <!-- Piece Cipher Panel -->
+    <div class="panel" id="pc-panel" style="display:none">
+      <label>Piece Code Cipher</label>
+      <div id="pc-visual-container"></div>
+      <div class="pc-output-code" id="pc-code-output" style="display:none">
+        <span id="pc-code-text"></span>
+        <button class="copy-btn" id="pc-copy">Copy</button>
+      </div>
+      <button class="btn btn-secondary" id="pc-ref-toggle" style="margin-top:8px;font-size:12px">Show Reference Table</button>
+      <div id="pc-ref-container" style="display:none"></div>
     </div>
 
     <div class="panel">
@@ -452,6 +1115,7 @@ textarea { resize: vertical; min-height: 60px; }
     <div class="board-wrap">
       <div class="board" id="board"></div>
     </div>
+    <div id="msg-editor-container"></div>
     <div class="tray-section">
       <div class="tray-title">Piece Tray — drag onto the board</div>
       <div class="tray" id="tray"></div>
@@ -459,19 +1123,17 @@ textarea { resize: vertical; min-height: 60px; }
   </div>
 </div>
 
+<div id="toast" class="toast"></div>
+
 <script>
 /* ═══════════════════════════════════════════════════════════════════
-   Chess Cipher v4.0 — Interactive Web App
+   Chess Cipher v5.0 — Interactive Web App
    ═══════════════════════════════════════════════════════════════════ */
 
 const CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789';
 const CIPHER_SEED = 'chess_cipher_v4';
 
-const PIECE_UNICODE = {
-  white: { king:'♔', queen:'♕', rook:'♖', bishop:'♗', knight:'♘', pawn:'♙' },
-  black: { king:'♚', queen:'♛', rook:'♜', bishop:'♝', knight:'♞', pawn:'♟' }
-};
-
+/* ─── Piece SVGs ─── */
 const PIECE_SVGS = {
 white_king: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22.5 11.63V6M20 8h5" stroke-width="1.5"/><path d="M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5" fill="#fff" stroke-linecap="butt"/><path d="M12.5 37c5.5 3.5 14.5 3.5 20 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-2.5-7.5-12-10.5-16-4-3 6 6 10.5 6 10.5v7" fill="#fff"/><path d="M12.5 30c5.5-3 14.5-3 20 0M12.5 33.5c5.5-3 14.5-3 20 0M12.5 37c5.5-3 14.5-3 20 0"/></g></svg>`,
 black_king: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45"><g fill="none" fill-rule="evenodd" stroke="#333" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22.5 11.63V6" stroke-width="1.5"/><path d="M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5" fill="#333" stroke-linecap="butt"/><path d="M12.5 37c5.5 3.5 14.5 3.5 20 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-2.5-7.5-12-10.5-16-4-3 6 6 10.5 6 10.5v7" fill="#333"/><path d="M20 8h5" stroke-width="1.5"/><path d="M32 29.5s8.5-4 6.03-9.65C34.15 14 25 18 22.5 24.5v2.1-2.1C20 18 10.85 14 6.97 19.85 4.5 25.5 13 29.5 13 29.5" stroke="#fff"/><path d="M12.5 30c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0" stroke="#fff"/></g></svg>`,
@@ -491,16 +1153,90 @@ function getPieceSVG(color, type) {
   return PIECE_SVGS[color + '_' + type] || '';
 }
 
+/* ─── Piece Cipher System ─── */
+const PC_SYMBOLS = ['K','Q','R','B','N','P','X'];
+const PC_UNICODE = {K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙',X:'·'};
+const PC_FULL = {K:'King',Q:'Queen',R:'Rook',B:'Bishop',N:'Knight',P:'Pawn',X:'—'};
+const PC_ENC = {}, PC_DEC = {};
+
+(function() {
+  let idx = 0;
+  for (const p1 of PC_SYMBOLS) {
+    for (const p2 of PC_SYMBOLS) {
+      if (idx < CHARACTERS.length) {
+        PC_ENC[CHARACTERS[idx]] = p1 + p2;
+        PC_DEC[p1 + p2] = CHARACTERS[idx];
+        idx++;
+      }
+    }
+  }
+})();
+
+function encodePieceCipher(msg) {
+  return [...msg.toUpperCase()].map(c => PC_ENC[c]).filter(Boolean).join('.');
+}
+
+function decodePieceCipher(code) {
+  return code.split('.').map(c => PC_DEC[c.trim().toUpperCase()] || '').join('');
+}
+
+function getPieceCipherHTML(msg) {
+  const upper = msg.toUpperCase();
+  let html = '<div class="pc-visual">';
+  for (const ch of upper) {
+    const code = PC_ENC[ch];
+    if (!code) continue;
+    const display = ch === ' ' ? '␣' : ch;
+    html += '<span class="pc-pair" title="' + display + ' = ' + PC_FULL[code[0]] + ' + ' + PC_FULL[code[1]] + '">';
+    html += '<span class="pc-icons">' + PC_UNICODE[code[0]] + ' ' + PC_UNICODE[code[1]] + '</span>';
+    html += '<span class="pc-char">' + display + '</span>';
+    html += '</span>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function getPieceCipherRefTable() {
+  let html = '<div class="pc-ref-grid">';
+  for (const ch of CHARACTERS) {
+    const code = PC_ENC[ch];
+    if (!code) continue;
+    const display = ch === ' ' ? '␣' : ch;
+    html += '<div class="pc-ref-cell">';
+    html += '<span class="pc-ref-char">' + display + '</span>';
+    html += '<span class="pc-ref-icons">' + PC_UNICODE[code[0]] + PC_UNICODE[code[1]] + '</span>';
+    html += '<span class="pc-ref-code">' + code + '</span>';
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ─── V1 Unicode for mini-board display ─── */
+const V1_UNICODE = {
+  white_king:'♔',white_queen:'♕',white_rook:'♖',white_bishop:'♗',white_knight:'♘',white_pawn:'♙',
+  black_king:'♚',black_queen:'♛',black_rook:'♜',black_bishop:'♝',black_knight:'♞',black_pawn:'♟'
+};
+
+/* ─── Constants ─── */
 const PIECE_NOTATION = { king:'K', queen:'Q', rook:'R', bishop:'B', knight:'N', pawn:'' };
 const BACK_RANK = ['rook','knight','bishop','queen','king','bishop','knight','rook'];
 
+/* ─── State ─── */
 const STATE = {
   mode: 'encrypt',
   overlayVisible: false,
   boardPieces: {},
   mapping: null,
   highlights: new Set(),
-  currentMessage: ''
+  currentMessage: '',
+  messageChars: []
+};
+
+const V1 = {
+  currentPlayer: 1,
+  messages: [],
+  isAnimating: false
 };
 
 /* ─── Mapping ─── */
@@ -518,7 +1254,7 @@ function createMapping() {
   return { charToSq, sqToChar };
 }
 
-/* ─── Seeded RNG (mulberry32) ─── */
+/* ─── Seeded RNG ─── */
 function mulberry32(seed) {
   let s = seed | 0;
   return function() {
@@ -530,8 +1266,7 @@ function mulberry32(seed) {
 }
 
 function hashToSeed(text) {
-  const h = sha256(text);
-  return parseInt(h.substring(0, 8), 16);
+  return parseInt(sha256(text).substring(0, 8), 16);
 }
 
 /* ─── Board helpers ─── */
@@ -569,7 +1304,7 @@ function pickColor(sq, rng) {
   return rng() < 0.5 ? 'white' : 'black';
 }
 
-/* ─── Legal origins for realistic highlights ─── */
+/* ─── Legal origins ─── */
 function getLegalOrigins(sq, color, piece, boardState) {
   const col = sq.charCodeAt(0) - 97, row = parseInt(sq[1]) - 1;
   const pts = [];
@@ -632,7 +1367,6 @@ function parseFilename(text) {
 function generateEncryptBoard(msgSquares, msgText) {
   const rng = mulberry32(hashToSeed(msgText));
   const board = {};
-  const uniqueMsg = new Set(msgSquares);
 
   for (let idx = 0; idx < msgSquares.length; idx++) {
     const sq = msgSquares[idx];
@@ -722,7 +1456,211 @@ function generateEncryptBoard(msgSquares, msgText) {
   return { board, highlights: hl, filename: fname };
 }
 
-/* ─── DOM ─── */
+/* ─── Free Board Logic ─── */
+function freeHandleInput(text) {
+  const boardPieces = {};
+  const messageChars = [];
+  const seenSquares = new Set();
+
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const sq = STATE.mapping.charToSq[ch];
+    if (!sq) continue;
+    messageChars.push({ char: ch, sq, index: i });
+    if (!seenSquares.has(sq)) {
+      seenSquares.add(sq);
+      const rng = mulberry32(hashToSeed('free_' + sq));
+      const rank = parseInt(sq[1]);
+      const fi = sq.charCodeAt(0) - 97;
+      let type;
+      if (rank === 1 || rank === 8) type = BACK_RANK[fi];
+      else if (rank === 2 || rank === 7) type = rng() < 0.8 ? 'pawn' : 'knight';
+      else type = pickPieceType(sq, rng);
+      if (type === 'king') type = 'queen';
+      const color = (Object.keys(boardPieces).length % 2 === 0) ? 'white' : 'black';
+      boardPieces[sq] = { color, type };
+    }
+  }
+  return { boardPieces, messageChars };
+}
+
+function freeRenderCharBar(messageChars) {
+  if (!messageChars.length) return '';
+  return messageChars.map(function(mc) {
+    const display = mc.char === ' ' ? '␣' : mc.char;
+    return '<span class="char-chip" data-index="' + mc.index + '" title="Square: ' + mc.sq + '">'
+      + '<span class="char-chip-letter">' + display + '</span>'
+      + '<span class="char-chip-sq">' + mc.sq + '</span>'
+      + '<span class="char-chip-del">×</span>'
+      + '</span>';
+  }).join('');
+}
+
+/* ─── Message Editor ─── */
+function renderMessageEditor(messageChars, boardPieces) {
+  if (!messageChars || messageChars.length === 0) return '';
+  let itemsHTML = '';
+  for (let i = 0; i < messageChars.length; i++) {
+    const mc = messageChars[i];
+    const displayChar = mc.char === ' ' ? '␣' : mc.char;
+    const piece = boardPieces[mc.sq];
+    let pieceHTML = '';
+    if (piece) {
+      pieceHTML = '<div class="msg-editor-piece">' + getPieceSVG(piece.color, piece.type) + '</div>';
+    } else {
+      pieceHTML = '<div class="msg-editor-piece"></div>';
+    }
+    itemsHTML += '<div class="msg-editor-item" data-index="' + mc.index + '">'
+      + pieceHTML
+      + '<span class="msg-editor-char">' + displayChar + '</span>'
+      + '<span class="msg-editor-sq">' + mc.sq + '</span>'
+      + '<button class="msg-editor-del" data-index="' + mc.index + '" title="Remove">×</button>'
+      + '</div>';
+    if (i < messageChars.length - 1) {
+      itemsHTML += '<span class="msg-editor-arrow">→</span>';
+    }
+  }
+  const fullMessage = messageChars.map(function(mc) { return mc.char === ' ' ? '␣' : mc.char; }).join('');
+  return '<div class="msg-editor">'
+    + '<div class="msg-editor-header">'
+    + '<span class="msg-editor-title">Message Composition</span>'
+    + '<span class="msg-editor-count">' + messageChars.length + ' char' + (messageChars.length !== 1 ? 's' : '') + '</span>'
+    + '</div>'
+    + '<div class="msg-editor-list">' + itemsHTML + '</div>'
+    + '<div class="msg-editor-readout-label">Full message</div>'
+    + '<div class="msg-editor-readout">' + fullMessage + '</div>'
+    + '</div>';
+}
+
+/* ─── 1v1 Mode Functions ─── */
+function v1SendMessage(msg) {
+  const upper = msg.toUpperCase();
+  const squares = [];
+  for (const ch of upper) {
+    const sq = STATE.mapping.charToSq[ch];
+    if (!sq) return null;
+    squares.push(sq);
+  }
+  const result = generateEncryptBoard(squares, upper);
+  const entry = {
+    from: V1.currentPlayer,
+    board: result.board,
+    highlights: result.highlights,
+    filename: result.filename,
+    timestamp: Date.now(),
+    charCount: upper.length
+  };
+  V1.messages.push(entry);
+  V1.currentPlayer = V1.currentPlayer === 1 ? 2 : 1;
+  return entry;
+}
+
+function v1AnimatePieces(boardPieces, callback) {
+  V1.isAnimating = true;
+  const boardEl = document.getElementById('board');
+  const entries = Object.entries(boardPieces);
+  for (let i = entries.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [entries[i], entries[j]] = [entries[j], entries[i]];
+  }
+  let placed = 0;
+  entries.forEach(function([sq, piece], idx) {
+    setTimeout(function() {
+      const sqEl = boardEl.querySelector('#sq-' + sq);
+      if (sqEl) {
+        const existing = sqEl.querySelector('.piece');
+        if (existing) existing.remove();
+        const span = document.createElement('span');
+        span.className = 'piece piece-animate';
+        span.dataset.sq = sq;
+        span.dataset.color = piece.color;
+        span.dataset.type = piece.type;
+        span.innerHTML = getPieceSVG(piece.color, piece.type);
+        sqEl.appendChild(span);
+      }
+      placed++;
+      if (placed === entries.length) {
+        V1.isAnimating = false;
+        if (callback) callback();
+      }
+    }, idx * 50);
+  });
+  if (entries.length === 0) {
+    V1.isAnimating = false;
+    if (callback) callback();
+  }
+}
+
+function v1RenderHistory() {
+  const container = document.getElementById('v1-history');
+  if (V1.messages.length === 0) {
+    container.innerHTML = '<div class="v1-empty">No messages yet. Type a message and send it!</div>';
+    return;
+  }
+  let html = '';
+  for (let i = V1.messages.length - 1; i >= 0; i--) {
+    const m = V1.messages[i];
+    const time = new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const isP1 = m.from === 1;
+    const playerColor = isP1 ? '#81b64c' : '#e8a43a';
+    const pieces = Object.values(m.board);
+    const miniW = pieces.filter(p => p.color === 'white').slice(0, 8).map(p => V1_UNICODE['white_' + p.type] || '').join('');
+    const miniB = pieces.filter(p => p.color === 'black').slice(0, 8).map(p => V1_UNICODE['black_' + p.type] || '').join('');
+    html += '<div class="v1-msg ' + (isP1 ? 'v1-msg-p1' : 'v1-msg-p2') + '">'
+      + '<div class="v1-msg-header">'
+      + '<span class="v1-player-dot" style="background:' + playerColor + '"></span>'
+      + '<span class="v1-player-name" style="color:' + playerColor + '">Player ' + m.from + '</span>'
+      + '<span class="v1-msg-time">' + time + '</span>'
+      + '</div>'
+      + '<div class="v1-msg-preview">'
+      + '<span class="v1-mini-pieces">' + miniW + ' ' + miniB + '</span>'
+      + '<span class="v1-msg-chars">' + m.charCount + ' chars</span>'
+      + '</div>'
+      + '<div class="v1-msg-actions">'
+      + '<button class="btn-v1 btn-v1-view" data-index="' + i + '">View</button>'
+      + '<button class="btn-v1 btn-v1-decode" data-index="' + i + '">Decode</button>'
+      + '<button class="btn-v1 btn-v1-share" data-index="' + i + '" style="background:#3498db;color:#fff">Share</button>'
+      + '</div>'
+      + '<div class="v1-decode-area" id="v1-decode-' + i + '"></div>'
+      + '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function v1DecodeMessage(entry) {
+  const parsed = parseFilename(entry.filename);
+  return parsed.map(sq => STATE.mapping.sqToChar[sq] || '?').join('');
+}
+
+function v1UpdateTurn() {
+  const isP1 = V1.currentPlayer === 1;
+  const color = isP1 ? '#81b64c' : '#e8a43a';
+  document.getElementById('v1-turn-container').innerHTML =
+    '<div class="v1-turn"><span class="v1-turn-dot" style="background:' + color + '"></span>'
+    + '<span class="v1-turn-label">Player ' + V1.currentPlayer + '\'s turn</span></div>';
+  document.querySelectorAll('.v1-ptab').forEach(function(t) {
+    t.className = 'v1-ptab';
+    if (t.dataset.player == V1.currentPlayer) {
+      t.classList.add(isP1 ? 'active-p1' : 'active-p2');
+    }
+  });
+}
+
+function v1ShowHandoff(nextPlayer) {
+  const overlay = document.createElement('div');
+  overlay.className = 'v1-screen-overlay';
+  overlay.innerHTML = '<div class="v1-screen-box">'
+    + '<div class="v1-screen-title">Message Sent!</div>'
+    + '<div class="v1-screen-sub">Pass the device to Player ' + nextPlayer + '</div>'
+    + '<button class="v1-screen-btn" id="v1-handoff-btn">I\'m Player ' + nextPlayer + ' — Ready</button>'
+    + '</div>';
+  document.body.appendChild(overlay);
+  document.getElementById('v1-handoff-btn').addEventListener('click', function() {
+    overlay.remove();
+  });
+}
+
+/* ─── DOM Rendering ─── */
 function placePiece(sq, color, type) {
   STATE.boardPieces[sq] = { color, type };
   renderSquare(sq);
@@ -738,8 +1676,11 @@ function removePiece(sq) {
 function clearBoard() {
   STATE.boardPieces = {};
   STATE.highlights = new Set();
+  STATE.messageChars = [];
   renderBoard();
   updateSidebar();
+  updateMsgEditor();
+  updatePieceCipher('');
 }
 
 function renderSquare(sq) {
@@ -747,7 +1688,6 @@ function renderSquare(sq) {
   if (!el) return;
   const light = isLightSquare(sq);
   const hl = STATE.highlights.has(sq);
-
   el.className = 'sq';
   if (hl) el.classList.add(light ? 'sq-hl-light' : 'sq-hl-dark');
   else el.classList.add(light ? 'sq-light' : 'sq-dark');
@@ -755,29 +1695,24 @@ function renderSquare(sq) {
   let html = '';
   const p = STATE.boardPieces[sq];
   if (p) {
-    const svg = getPieceSVG(p.color, p.type);
-    html += `<span class="piece" data-sq="${sq}" data-color="${p.color}" data-type="${p.type}">${svg}</span>`;
+    html += '<span class="piece" data-sq="' + sq + '" data-color="' + p.color + '" data-type="' + p.type + '">' + getPieceSVG(p.color, p.type) + '</span>';
   }
-
   if (STATE.overlayVisible && STATE.mapping) {
     const ch = STATE.mapping.sqToChar[sq];
     if (ch !== undefined) {
       const display = ch === ' ' ? '␣' : ch;
-      html += `<span class="char-label">${display}</span>`;
+      html += '<span class="char-label">' + display + '</span>';
     }
   }
-
   const col = sq.charCodeAt(0) - 97;
   const row = parseInt(sq[1]) - 1;
-  if (row === 0) html += `<span class="coord-file">${sq[0]}</span>`;
-  if (col === 0) html += `<span class="coord-rank">${sq[1]}</span>`;
-
+  if (row === 0) html += '<span class="coord-file">' + sq[0] + '</span>';
+  if (col === 0) html += '<span class="coord-rank">' + sq[1] + '</span>';
   el.innerHTML = html;
 }
 
 function renderBoard() {
-  const all = allSquares();
-  for (const sq of all) renderSquare(sq);
+  for (const sq of allSquares()) renderSquare(sq);
 }
 
 function buildBoardDOM() {
@@ -821,21 +1756,136 @@ function updateSidebar() {
   if (STATE.mode === 'free') {
     const readout = document.getElementById('free-readout');
     if (!STATE.mapping) return;
-    const occupied = Object.keys(STATE.boardPieces);
-    const chars = [];
-    for (const sq of occupied) {
-      const ch = STATE.mapping.sqToChar[sq];
-      if (ch !== undefined) chars.push({ sq, ch });
-    }
-    if (chars.length === 0) {
-      readout.textContent = 'Place pieces on the board...';
-      readout.className = 'free-readout empty';
-    } else {
-      chars.sort((a, b) => a.sq.localeCompare(b.sq));
-      readout.textContent = chars.map(c => c.ch === ' ' ? '␣' : c.ch).join('');
+    if (STATE.messageChars.length > 0) {
+      const text = STATE.messageChars.map(c => c.char === ' ' ? '␣' : c.char).join('');
+      readout.textContent = text;
       readout.className = 'free-readout';
+    } else {
+      const occupied = Object.keys(STATE.boardPieces);
+      const chars = [];
+      for (const sq of occupied) {
+        const ch = STATE.mapping.sqToChar[sq];
+        if (ch !== undefined) chars.push({ sq, ch });
+      }
+      if (chars.length === 0) {
+        readout.textContent = 'Start typing above...';
+        readout.className = 'free-readout empty';
+      } else {
+        chars.sort((a, b) => a.sq.localeCompare(b.sq));
+        readout.textContent = chars.map(c => c.ch === ' ' ? '␣' : c.ch).join('');
+        readout.className = 'free-readout';
+      }
     }
   }
+}
+
+function updateMsgEditor() {
+  const container = document.getElementById('msg-editor-container');
+  container.innerHTML = renderMessageEditor(STATE.messageChars, STATE.boardPieces);
+
+  container.querySelectorAll('.msg-editor-del').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const idx = parseInt(this.dataset.index);
+      if (STATE.mode === 'free') {
+        const input = document.getElementById('free-msg-input');
+        const text = input.value.toUpperCase();
+        input.value = text.slice(0, idx) + text.slice(idx + 1);
+        handleFreeInput();
+      }
+    });
+  });
+}
+
+function updatePieceCipher(msg) {
+  const panel = document.getElementById('pc-panel');
+  if (!msg || msg.length === 0) {
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = 'block';
+  document.getElementById('pc-visual-container').innerHTML = getPieceCipherHTML(msg);
+  const codeOutput = document.getElementById('pc-code-output');
+  const codeText = document.getElementById('pc-code-text');
+  codeOutput.style.display = 'block';
+  codeText.textContent = encodePieceCipher(msg);
+}
+
+/* ─── Free Board Handler ─── */
+function handleFreeInput() {
+  const input = document.getElementById('free-msg-input');
+  const text = input.value.toUpperCase();
+  const result = freeHandleInput(text);
+  STATE.boardPieces = result.boardPieces;
+  STATE.messageChars = result.messageChars;
+  STATE.highlights = new Set();
+  renderBoard();
+  document.getElementById('free-char-bar').innerHTML = freeRenderCharBar(result.messageChars);
+  updateSidebar();
+  updateMsgEditor();
+  updatePieceCipher(text);
+
+  document.querySelectorAll('.char-chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      const idx = parseInt(this.dataset.index);
+      const t = input.value.toUpperCase();
+      input.value = t.slice(0, idx) + t.slice(idx + 1);
+      handleFreeInput();
+    });
+  });
+}
+
+/* ─── Share Link ─── */
+function generateShareLink(filename) {
+  const encoded = btoa(unescape(encodeURIComponent(filename)));
+  return window.location.origin + window.location.pathname + '#cipher=' + encoded;
+}
+
+function handleIncomingShare() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#cipher=')) return false;
+  const encoded = hash.slice(8);
+  try {
+    const filename = decodeURIComponent(escape(atob(encoded)));
+    const sqs = parseFilename(filename);
+    if (!sqs.length) return false;
+    const msg = sqs.map(s => STATE.mapping.sqToChar[s] || '?').join('');
+    const squares = [...msg].map(c => STATE.mapping.charToSq[c]);
+    const result = generateEncryptBoard(squares, msg);
+    STATE.boardPieces = {};
+    STATE.highlights = result.highlights;
+    STATE.messageChars = [];
+    renderBoard();
+    v1AnimatePieces(result.board, function() {
+      STATE.boardPieces = result.board;
+      STATE.currentMessage = msg;
+    });
+    updatePieceCipher(msg);
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.mode-section').forEach(function(s) { s.classList.remove('active'); });
+    document.querySelector('.tab[data-mode="decrypt"]').classList.add('active');
+    document.getElementById('sec-decrypt').classList.add('active');
+    STATE.mode = 'decrypt';
+    document.getElementById('dec-input').value = filename.replace(/\.png$/i, '');
+    document.getElementById('dec-message').textContent = msg;
+    document.getElementById('dec-result').style.display = 'block';
+    STATE.messageChars = [...msg].map(function(ch, i) {
+      return { char: ch, sq: STATE.mapping.charToSq[ch], index: i };
+    });
+    updateMsgEditor();
+    window.location.hash = '';
+    showToast('Shared message received!');
+    return true;
+  } catch(e) { return false; }
+}
+
+/* ─── Toast ─── */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.classList.remove('show'); }, 2000);
 }
 
 /* ─── Drag & Drop ─── */
@@ -845,7 +1895,6 @@ let ghostEl = null;
 function startDrag(e, color, type, fromSq) {
   e.preventDefault();
   dragData = { color, type, fromSq };
-
   ghostEl = document.createElement('div');
   ghostEl.className = 'drag-ghost';
   ghostEl.innerHTML = getPieceSVG(color, type);
@@ -873,28 +1922,19 @@ function endDrag(e) {
   const x = e.clientX || (e.changedTouches && e.changedTouches[0].clientX) || 0;
   const y = e.clientY || (e.changedTouches && e.changedTouches[0].clientY) || 0;
   const targetSq = getSquareFromPoint(x, y);
-
-  if (dragData.fromSq) {
-    removePiece(dragData.fromSq);
-  }
-
-  if (targetSq) {
-    placePiece(targetSq, dragData.color, dragData.type);
-  }
-
-  document.querySelectorAll('.sq.drag-over-light, .sq.drag-over-dark').forEach(el => {
+  if (dragData.fromSq) removePiece(dragData.fromSq);
+  if (targetSq) placePiece(targetSq, dragData.color, dragData.type);
+  document.querySelectorAll('.sq.drag-over-light, .sq.drag-over-dark').forEach(function(el) {
     el.classList.remove('drag-over-light', 'drag-over-dark');
   });
-
   if (ghostEl) { ghostEl.remove(); ghostEl = null; }
   dragData = null;
 }
 
-document.addEventListener('pointermove', (e) => {
+document.addEventListener('pointermove', function(e) {
   if (!dragData) return;
   moveGhost(e);
-
-  document.querySelectorAll('.sq.drag-over-light, .sq.drag-over-dark').forEach(el => {
+  document.querySelectorAll('.sq.drag-over-light, .sq.drag-over-dark').forEach(function(el) {
     el.classList.remove('drag-over-light', 'drag-over-dark');
   });
   const sq = getSquareFromPoint(e.clientX, e.clientY);
@@ -907,7 +1947,7 @@ document.addEventListener('pointermove', (e) => {
 document.addEventListener('pointerup', endDrag);
 document.addEventListener('pointercancel', endDrag);
 
-document.getElementById('board').addEventListener('pointerdown', (e) => {
+document.getElementById('board').addEventListener('pointerdown', function(e) {
   const pieceEl = e.target.closest('.piece');
   if (!pieceEl) return;
   const sq = pieceEl.dataset.sq;
@@ -919,7 +1959,7 @@ document.getElementById('board').addEventListener('pointerdown', (e) => {
   }
 });
 
-document.getElementById('board').addEventListener('contextmenu', (e) => {
+document.getElementById('board').addEventListener('contextmenu', function(e) {
   e.preventDefault();
   const sqEl = e.target.closest('.sq');
   if (sqEl && STATE.boardPieces[sqEl.dataset.sq]) {
@@ -927,21 +1967,25 @@ document.getElementById('board').addEventListener('contextmenu', (e) => {
   }
 });
 
-document.getElementById('tray').addEventListener('pointerdown', (e) => {
+document.getElementById('tray').addEventListener('pointerdown', function(e) {
   const trayPiece = e.target.closest('.tray-piece');
   if (!trayPiece) return;
   startDrag(e, trayPiece.dataset.color, trayPiece.dataset.type, null);
 });
 
 /* ─── Tabs ─── */
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
     tab.classList.add('active');
-    document.querySelectorAll('.mode-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.mode-section').forEach(function(s) { s.classList.remove('active'); });
     STATE.mode = tab.dataset.mode;
     document.getElementById('sec-' + STATE.mode).classList.add('active');
     if (STATE.mode === 'free') updateSidebar();
+    if (STATE.mode === '1v1') {
+      v1UpdateTurn();
+      v1RenderHistory();
+    }
   });
 });
 
@@ -957,13 +2001,13 @@ document.getElementById('overlay-label').addEventListener('click', function() {
 });
 
 /* ─── Encrypt ─── */
-document.getElementById('enc-btn').addEventListener('click', () => {
+document.getElementById('enc-btn').addEventListener('click', function() {
   const msg = document.getElementById('enc-input').value.toUpperCase();
   if (!msg) return;
   const { charToSq } = STATE.mapping;
   const bad = [...msg].filter(c => !charToSq[c]);
   if (bad.length) {
-    alert('Unsupported characters: ' + [...new Set(bad)].join(', ') + '\nSupported: A-Z, space, 0-9');
+    showToast('Unsupported: ' + [...new Set(bad)].join(', '));
     return;
   }
   const squares = [...msg].map(c => charToSq[c]);
@@ -972,47 +2016,170 @@ document.getElementById('enc-btn').addEventListener('click', () => {
   STATE.boardPieces = result.board;
   STATE.highlights = result.highlights;
   STATE.currentMessage = msg;
+  STATE.messageChars = [...msg].map(function(ch, i) {
+    return { char: ch, sq: charToSq[ch], index: i };
+  });
   renderBoard();
+  updateMsgEditor();
+  updatePieceCipher(msg);
 
   document.getElementById('enc-filename').textContent = result.filename;
   document.getElementById('enc-result').style.display = 'block';
+  showToast('Message encrypted!');
 });
 
-document.getElementById('enc-input').addEventListener('keydown', (e) => {
+document.getElementById('enc-input').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') document.getElementById('enc-btn').click();
 });
 
-document.getElementById('enc-copy').addEventListener('click', () => {
+document.getElementById('enc-copy').addEventListener('click', function() {
   const text = document.getElementById('enc-filename').textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.getElementById('enc-copy');
-    btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy', 1500);
-  });
+  navigator.clipboard.writeText(text).then(function() { showToast('Filename copied!'); });
+});
+
+document.getElementById('enc-share').addEventListener('click', function() {
+  const filename = document.getElementById('enc-filename').textContent;
+  const link = generateShareLink(filename);
+  const box = document.getElementById('enc-share-box');
+  box.textContent = link;
+  box.style.display = 'block';
+  navigator.clipboard.writeText(link).then(function() { showToast('Share link copied!'); });
 });
 
 /* ─── Decrypt ─── */
-document.getElementById('dec-btn').addEventListener('click', () => {
+document.getElementById('dec-btn').addEventListener('click', function() {
   const code = document.getElementById('dec-input').value;
   if (!code) return;
-  const { sqToChar } = STATE.mapping;
   const sqs = parseFilename(code);
   if (!sqs.length) {
     document.getElementById('dec-message').textContent = 'No valid moves found.';
     document.getElementById('dec-result').style.display = 'block';
     return;
   }
-  const msg = sqs.map(s => sqToChar[s] || '?').join('');
+  const msg = sqs.map(s => STATE.mapping.sqToChar[s] || '?').join('');
   document.getElementById('dec-message').textContent = msg;
   document.getElementById('dec-result').style.display = 'block';
+  STATE.currentMessage = msg;
+  STATE.messageChars = [...msg].map(function(ch, i) {
+    return { char: ch, sq: STATE.mapping.charToSq[ch], index: i };
+  });
+  updateMsgEditor();
+  updatePieceCipher(msg);
+  showToast('Message decoded!');
 });
 
-document.getElementById('dec-input').addEventListener('keydown', (e) => {
+document.getElementById('dec-input').addEventListener('keydown', function(e) {
   if (e.key === 'Enter') document.getElementById('dec-btn').click();
 });
 
 /* ─── Free Board ─── */
-document.getElementById('free-clear').addEventListener('click', clearBoard);
+document.getElementById('free-msg-input').addEventListener('input', handleFreeInput);
+
+document.getElementById('free-msg-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') e.preventDefault();
+});
+
+document.getElementById('free-clear').addEventListener('click', function() {
+  document.getElementById('free-msg-input').value = '';
+  clearBoard();
+});
+
+/* ─── 1v1 Mode ─── */
+document.getElementById('v1-send').addEventListener('click', function() {
+  const input = document.getElementById('v1-msg-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  if (V1.isAnimating) return;
+
+  const bad = [...msg.toUpperCase()].filter(c => !STATE.mapping.charToSq[c]);
+  if (bad.length) {
+    showToast('Unsupported: ' + [...new Set(bad)].join(', '));
+    return;
+  }
+
+  const nextPlayer = V1.currentPlayer === 1 ? 2 : 1;
+  const entry = v1SendMessage(msg);
+  if (!entry) return;
+
+  STATE.boardPieces = entry.board;
+  STATE.highlights = entry.highlights;
+  STATE.messageChars = [];
+  renderBoard();
+  updateMsgEditor();
+  updatePieceCipher('');
+  input.value = '';
+
+  v1UpdateTurn();
+  v1RenderHistory();
+  v1ShowHandoff(nextPlayer);
+  showToast('Message sent!');
+});
+
+document.getElementById('v1-msg-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('v1-send').click();
+});
+
+document.getElementById('v1-history').addEventListener('click', function(e) {
+  const viewBtn = e.target.closest('.btn-v1-view');
+  const decodeBtn = e.target.closest('.btn-v1-decode');
+  const shareBtn = e.target.closest('.btn-v1-share');
+
+  if (shareBtn) {
+    const idx = parseInt(shareBtn.dataset.index);
+    const m = V1.messages[idx];
+    if (!m) return;
+    const link = generateShareLink(m.filename);
+    navigator.clipboard.writeText(link).then(function() { showToast('Share link copied!'); });
+    return;
+  }
+
+  if (viewBtn) {
+    const idx = parseInt(viewBtn.dataset.index);
+    const m = V1.messages[idx];
+    if (!m || V1.isAnimating) return;
+    STATE.boardPieces = {};
+    STATE.highlights = m.highlights;
+    STATE.messageChars = [];
+    renderBoard();
+    v1AnimatePieces(m.board, function() {
+      STATE.boardPieces = m.board;
+    });
+    showToast('Viewing Player ' + m.from + '\'s board');
+  }
+
+  if (decodeBtn) {
+    const idx = parseInt(decodeBtn.dataset.index);
+    const m = V1.messages[idx];
+    if (!m) return;
+    const decoded = v1DecodeMessage(m);
+    const area = document.getElementById('v1-decode-' + idx);
+    if (area) {
+      if (area.innerHTML) {
+        area.innerHTML = '';
+      } else {
+        area.innerHTML = '<div class="v1-decoded-reveal">' + decoded + '</div>';
+      }
+    }
+  }
+});
+
+/* ─── Piece Cipher ─── */
+document.getElementById('pc-ref-toggle').addEventListener('click', function() {
+  const container = document.getElementById('pc-ref-container');
+  if (container.style.display === 'none') {
+    container.innerHTML = getPieceCipherRefTable();
+    container.style.display = 'block';
+    this.textContent = 'Hide Reference Table';
+  } else {
+    container.style.display = 'none';
+    this.textContent = 'Show Reference Table';
+  }
+});
+
+document.getElementById('pc-copy').addEventListener('click', function() {
+  const text = document.getElementById('pc-code-text').textContent;
+  navigator.clipboard.writeText(text).then(function() { showToast('Piece code copied!'); });
+});
 
 /* ─── Export as PNG ─── */
 function exportBoardAsPNG(filename) {
@@ -1056,28 +2223,33 @@ function exportBoardAsPNG(filename) {
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');a.href=url;a.download=filename||'chess_board.png';
     document.body.appendChild(a);a.click();document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url),100);
+    setTimeout(function(){URL.revokeObjectURL(url)},100);
   },'image/png');
 }
 
-document.getElementById('export-btn').addEventListener('click', () => {
+document.getElementById('export-btn').addEventListener('click', function() {
   const fname = STATE.currentMessage ? formatFilename(
-    Object.keys(STATE.boardPieces).slice(0,STATE.currentMessage.length).map(sq => {
+    Object.keys(STATE.boardPieces).slice(0,STATE.currentMessage.length).map(function(sq) {
       const p = STATE.boardPieces[sq];
       return (PIECE_NOTATION[p?.type]||'') + sq;
     })
   ) : 'chess_board.png';
   exportBoardAsPNG(fname);
+  showToast('Board saved as PNG!');
 });
 
 /* ─── Init ─── */
 STATE.mapping = createMapping();
 buildBoardDOM();
 buildTray();
+v1UpdateTurn();
+v1RenderHistory();
+handleIncomingShare();
 
 window.APP = {
-  STATE, placePiece, removePiece, clearBoard, renderBoard, updateSidebar,
-  mapping: STATE.mapping, createMapping, parseFilename, generateEncryptBoard
+  STATE, V1, placePiece, removePiece, clearBoard, renderBoard, updateSidebar,
+  mapping: STATE.mapping, createMapping, parseFilename, generateEncryptBoard,
+  encodePieceCipher, decodePieceCipher
 };
 </script>
 </body>
