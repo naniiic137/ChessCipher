@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chess Cipher v5.0</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.11.0/sha256.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -664,7 +665,9 @@ textarea { resize: vertical; min-height: 60px; }
 .v1-screen-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(20,19,18,0.8);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -804,7 +807,31 @@ textarea { resize: vertical; min-height: 60px; }
   flex-direction: column;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
+#msg-editor-container { width: 100%; max-width: 590px; min-width: 0; }
+.msg-editor, .tray-section { min-width: 0; }
+.msg-editor-list { min-width: 0; max-width: 100%; }
+
+/* Black pieces get a light outline so they stay visible on the dark cards */
+.tray-piece.piece-black svg, .msg-editor-piece.piece-black svg, .drag-ghost.piece-black svg {
+  filter: drop-shadow(0 0 1px rgba(255,255,255,0.9)) drop-shadow(0 0 2px rgba(255,255,255,0.35));
+}
+
+.warn-text {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(232,164,58,0.1);
+  border: 1px solid rgba(232,164,58,0.35);
+  color: #f0b865;
+  font-size: 12px;
+  line-height: 1.4;
+}
+#dec-message.is-error { color: #f0b865 !important; font-size: 14px !important; font-weight: 600 !important; }
+
+/* 1v1 hand-off: hide the board while the device is passed over */
+body.handoff-active .board-area, body.handoff-active #v1-history { filter: blur(14px); }
 
 .board-wrap {
   position: relative;
@@ -918,14 +945,14 @@ textarea { resize: vertical; min-height: 60px; }
 
 .tray {
   display: flex;
-  gap: 4px;
+  gap: 3px;
   flex-wrap: wrap;
   justify-content: center;
 }
 
 .tray-piece {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -941,7 +968,7 @@ textarea { resize: vertical; min-height: 60px; }
 .tray-piece:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 .tray-piece:active { cursor: grabbing; transform: scale(1.05); }
 
-.tray-sep { width: 12px; }
+.tray-sep { width: 6px; }
 
 /* ─── Drag ghost ─── */
 .drag-ghost {
@@ -1020,16 +1047,24 @@ textarea { resize: vertical; min-height: 60px; }
     align-items: center;
     padding: 16px;
   }
-  .sidebar { width: 100%; max-width: 590px; }
-  .board { grid-template-columns: repeat(8, min(9vw, 70px)); grid-template-rows: repeat(8, min(9vw, 70px)); }
-  .sq { width: unset; height: unset; aspect-ratio: 1; font-size: min(6vw, 50px); }
-  .sq .piece { width: min(7vw, 56px); height: min(7vw, 56px); }
+  /* Phones/tablets: logo, then the board as wide as the screen allows, then the controls */
+  .sidebar { display: contents; }
+  .sidebar > * { width: 100%; max-width: 590px; }
+  .logo { order: -2; }
+  .board-area { order: -1; width: 100%; max-width: 590px; }
+  .board-wrap { width: 100%; max-width: 560px; }
+  .board { width: 100%; grid-template-columns: repeat(8, minmax(0, 1fr)); grid-template-rows: none; }
+  .sq { width: auto; height: auto; aspect-ratio: 1; font-size: min(6vw, 50px); }
+  .sq .piece { width: 82%; height: 82%; }
   .pc-ref-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 480px) {
   .tabs { flex-wrap: wrap; }
   .tab { flex: 1 1 45%; }
+  .app { padding: 12px; gap: 16px; }
+  .panel { padding: 14px; }
+  .msg-editor, .tray-section { padding: 12px; }
 }
 </style>
 </head>
@@ -1079,6 +1114,7 @@ textarea { resize: vertical; min-height: 60px; }
       <div class="mode-section" id="sec-free">
         <label for="free-msg-input">Type Your Message</label>
         <input type="text" id="free-msg-input" placeholder="Type here — pieces appear on the board..." maxlength="50" autocomplete="off">
+        <div class="warn-text" id="free-warn" style="display:none" role="status"></div>
         <div class="free-char-bar" id="free-char-bar"></div>
         <label>Decoded from board</label>
         <div class="free-readout empty" id="free-readout">Start typing above...</div>
@@ -1257,19 +1293,70 @@ const V1 = {
   isAnimating: false
 };
 
-/* ─── Mapping ─── */
+/* ─── Mapping ───
+   Format v2 (current): every one of the 64 squares stands for a character.
+   E, T, A and space get 3 squares, Q, Z, X, J and the digits get 1, every other
+   letter gets 2. The k-th time a character appears it uses candidate k mod n, so
+   repeated letters land on different squares. A v2 filename ends with an extra
+   "checksum" move and a game result (1-0 / 0-1), which marks the format.
+   Format v1 (legacy, no result token): one square per character. Still decoded.
+   main.py implements exactly the same scheme. */
+const V2_SLOTS = { 'E': 3, 'T': 3, 'A': 3, ' ': 3, 'Q': 1, 'Z': 1, 'X': 1, 'J': 1 };
+function slotCount(ch) {
+  if (ch in V2_SLOTS) return V2_SLOTS[ch];
+  return (ch >= '0' && ch <= '9') ? 1 : 2;
+}
+function hexCmp(a, b) { return a < b ? -1 : a > b ? 1 : 0; }
+
 function createMapping() {
-  const squares = [];
-  for (const r of '12345678')
-    for (const f of 'abcdefgh')
-      squares.push(f + r);
+  const squares = allSquares();
+  const key = {};
+  for (const sq of squares) key[sq] = sha256(CIPHER_SEED + ':v2:' + sq);
+  squares.sort((a, b) => hexCmp(key[a], key[b]));
+  const charToSqs = {}, charToSq = {}, sqToChar = {};
+  let k = 0;
+  for (const ch of CHARACTERS) {
+    const n = slotCount(ch);
+    charToSqs[ch] = squares.slice(k, k + n);
+    charToSq[ch] = charToSqs[ch][0];
+    for (const sq of charToSqs[ch]) sqToChar[sq] = ch;
+    k += n;
+  }
+  return { charToSq, charToSqs, sqToChar, version: 2 };
+}
+
+/* Legacy v1 mapping (one square per character), kept so old filenames/links decode */
+function createLegacyMapping() {
+  const squares = allSquares();
   squares.sort((a, b) => sha256(CIPHER_SEED + a).localeCompare(sha256(CIPHER_SEED + b)));
-  const charToSq = {}, sqToChar = {};
+  const charToSq = {}, sqToChar = {}, charToSqs = {};
   for (let i = 0; i < CHARACTERS.length; i++) {
     charToSq[CHARACTERS[i]] = squares[i];
+    charToSqs[CHARACTERS[i]] = [squares[i]];
     sqToChar[squares[i]] = CHARACTERS[i];
   }
-  return { charToSq, sqToChar };
+  return { charToSq, charToSqs, sqToChar, version: 1 };
+}
+
+/* Squares for a message, rotating through each character's candidates */
+function messageToSquares(msg, mapping) {
+  const seen = {};
+  return [...msg].map(function(ch) {
+    const c = mapping.charToSqs[ch];
+    if (!c) return null;
+    const k = seen[ch] || 0;
+    seen[ch] = k + 1;
+    return c[k % c.length];
+  });
+}
+
+function checksumSquare(msg) {
+  const n = parseInt(sha256(CIPHER_SEED + ':check:' + msg).substring(0, 8), 16) % 64;
+  return allSquares()[n];
+}
+
+function unsupportedChars(text) {
+  return [...new Set([...text].filter(c => !CHARACTERS.includes(c)))];
 }
 
 /* ─── Seeded RNG ─── */
@@ -1358,31 +1445,76 @@ function makeNotation(sq, pieceType, rng) {
   return pf + cap + sq + chk;
 }
 
-function formatFilename(moves) {
+function formatFilename(moves, result) {
   const parts = [];
   for (let i = 0; i < moves.length; i++) {
     parts.push(i % 2 === 0 ? (Math.floor(i/2)+1) + '.' + moves[i] : moves[i]);
   }
   let name = parts.join('_');
   if (name.length > 240) name = moves.join('_');
+  if (result) name += '_' + result;
   return name + '.png';
 }
 
-function parseFilename(text) {
-  text = text.replace(/\.png$/i, '').trim().replace(/^["']+|["']+$/g, '');
-  const out = [];
-  for (let tok of text.split('_')) {
+const RESULT_RE = /^(1-0|0-1|½-½)$/;
+
+/* Returns the move squares and whether the v2 result marker is present */
+function parseCipher(text) {
+  text = String(text || '').trim().replace(/^["']+|["']+$/g, '').replace(/\.png$/i, '').trim();
+  const toks = text.split('_').map(t => t.trim()).filter(Boolean);
+  let v2 = false;
+  if (toks.length && RESULT_RE.test(toks[toks.length - 1].replace(/^\d+\./, ''))) { v2 = true; toks.pop(); }
+  const squares = [];
+  for (let tok of toks) {
     tok = tok.replace(/^\d+\./, '').replace(/[+#]+$/, '');
     if (tok.length >= 2) {
       const sq = tok.slice(-2).toLowerCase();
-      if ('abcdefgh'.includes(sq[0]) && '12345678'.includes(sq[1])) out.push(sq);
+      if ('abcdefgh'.includes(sq[0]) && '12345678'.includes(sq[1])) squares.push(sq);
     }
   }
-  return out;
+  return { squares, v2 };
+}
+
+function parseFilename(text) { return parseCipher(text).squares; }
+
+/* Decode a filename. ok=false with reason 'empty' (no moves) or 'not-cipher'. */
+function decodeCipher(text) {
+  const { squares, v2 } = parseCipher(text);
+  if (!squares.length) return { ok: false, reason: 'empty' };
+  if (v2) {
+    if (squares.length < 2) return { ok: false, reason: 'not-cipher' };
+    const body = squares.slice(0, -1);
+    const msg = body.map(sq => STATE.mapping.sqToChar[sq]).join('');
+    if (checksumSquare(msg) !== squares[squares.length - 1]) return { ok: false, reason: 'not-cipher' };
+    return { ok: true, message: msg, squares: body, boardSquares: squares, version: 2 };
+  }
+  const msg = squares.map(sq => LEGACY_MAPPING.sqToChar[sq] || '?').join('');
+  if (msg.includes('?')) return { ok: false, reason: 'not-cipher' };
+  return { ok: true, message: msg, squares, boardSquares: squares, version: 1 };
+}
+
+const NOT_CIPHER_MSG = "This doesn't look like a ChessCipher message.";
+
+/* Encrypt a (validated, upper-case) message with the current v2 format */
+function encryptMessage(msg) {
+  const body = messageToSquares(msg, STATE.mapping);
+  const boardSquares = body.concat([checksumSquare(msg)]);
+  const result = generateEncryptBoard(boardSquares, msg, { result: boardSquares.length % 2 ? '1-0' : '0-1' });
+  result.squares = body;
+  return result;
+}
+
+/* Board + filename for a decoded message, matching what the sender generated */
+function boardForDecoded(dec) {
+  if (dec.version === 2) return encryptMessage(dec.message);
+  const r = generateEncryptBoard(dec.squares, dec.message, {});
+  r.squares = dec.squares;
+  return r;
 }
 
 /* ─── Board generation (encrypt) ─── */
-function generateEncryptBoard(msgSquares, msgText) {
+function generateEncryptBoard(msgSquares, msgText, opts) {
+  opts = opts || {};
   const rng = mulberry32(hashToSeed(msgText));
   const board = {};
 
@@ -1392,6 +1524,10 @@ function generateEncryptBoard(msgSquares, msgText) {
       const pc = idx % 2 === 0 ? 'white' : 'black';
       let pt = pickPieceType(sq, rng);
       if (pt === 'king') pt = ['queen','rook','bishop','knight'][Math.floor(rng()*4)];
+      // A pawn can't arrive on its own back two ranks: use a minor piece instead
+      const rank = parseInt(sq[1]);
+      if (pt === 'pawn' && ((pc === 'white' && rank <= 2) || (pc === 'black' && rank >= 7)))
+        pt = rng() < 0.5 ? 'knight' : 'bishop';
       board[sq] = { color: pc, type: pt };
     }
   }
@@ -1477,7 +1613,7 @@ function generateEncryptBoard(msgSquares, msgText) {
   }
 
   const moves = msgSquares.map(sq => makeNotation(sq, board[sq].type, rng));
-  const fname = formatFilename(moves);
+  const fname = formatFilename(moves, opts.result);
 
   return { board, highlights: hl, filename: fname };
 }
@@ -1487,11 +1623,15 @@ function freeHandleInput(text) {
   const boardPieces = {};
   const messageChars = [];
   const seenSquares = new Set();
+  const seenChars = {};
 
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
-    const sq = STATE.mapping.charToSq[ch];
-    if (!sq) continue;
+    const cands = STATE.mapping.charToSqs[ch];
+    if (!cands) continue;
+    const k = seenChars[ch] || 0;
+    seenChars[ch] = k + 1;
+    const sq = cands[k % cands.length];
     messageChars.push({ char: ch, sq, index: i });
     if (!seenSquares.has(sq)) {
       seenSquares.add(sq);
@@ -1532,7 +1672,7 @@ function renderMessageEditor(messageChars, boardPieces) {
     const piece = boardPieces[mc.sq];
     let pieceHTML = '';
     if (piece) {
-      pieceHTML = '<div class="msg-editor-piece">' + getPieceSVG(piece.color, piece.type) + '</div>';
+      pieceHTML = '<div class="msg-editor-piece piece-' + piece.color + '">' + getPieceSVG(piece.color, piece.type) + '</div>';
     } else {
       pieceHTML = '<div class="msg-editor-piece"></div>';
     }
@@ -1561,13 +1701,8 @@ function renderMessageEditor(messageChars, boardPieces) {
 /* ─── 1v1 Mode Functions ─── */
 function v1SendMessage(msg) {
   const upper = msg.toUpperCase();
-  const squares = [];
-  for (const ch of upper) {
-    const sq = STATE.mapping.charToSq[ch];
-    if (!sq) return null;
-    squares.push(sq);
-  }
-  const result = generateEncryptBoard(squares, upper);
+  if (unsupportedChars(upper).length) return null;
+  const result = encryptMessage(upper);
   const entry = {
     from: V1.currentPlayer,
     board: result.board,
@@ -1654,8 +1789,8 @@ function v1RenderHistory() {
 }
 
 function v1DecodeMessage(entry) {
-  const parsed = parseFilename(entry.filename);
-  return parsed.map(sq => STATE.mapping.sqToChar[sq] || '?').join('');
+  const dec = decodeCipher(entry.filename);
+  return dec.ok ? dec.message : NOT_CIPHER_MSG;
 }
 
 function v1UpdateTurn() {
@@ -1681,8 +1816,10 @@ function v1ShowHandoff(nextPlayer) {
     + '<button class="v1-screen-btn" id="v1-handoff-btn">I\'m Player ' + nextPlayer + ' — Ready</button>'
     + '</div>';
   document.body.appendChild(overlay);
+  document.body.classList.add('handoff-active');
   document.getElementById('v1-handoff-btn').addEventListener('click', function() {
     overlay.remove();
+    document.body.classList.remove('handoff-active');
   });
 }
 
@@ -1724,7 +1861,7 @@ function renderSquare(sq) {
     html += '<span class="piece" data-sq="' + sq + '" data-color="' + p.color + '" data-type="' + p.type + '">' + getPieceSVG(p.color, p.type) + '</span>';
   }
   if (STATE.overlayVisible && STATE.mapping) {
-    const ch = STATE.mapping.sqToChar[sq];
+    const ch = (STATE.legacyView ? LEGACY_MAPPING : STATE.mapping).sqToChar[sq];
     if (ch !== undefined) {
       const display = ch === ' ' ? '␣' : ch;
       html += '<span class="char-label">' + display + '</span>';
@@ -1763,7 +1900,7 @@ function buildTray() {
   for (const color of ['white', 'black']) {
     for (const type of ['king','queen','rook','bishop','knight','pawn']) {
       const div = document.createElement('div');
-      div.className = 'tray-piece';
+      div.className = 'tray-piece piece-' + color;
       div.innerHTML = getPieceSVG(color, type);
       div.dataset.color = color;
       div.dataset.type = type;
@@ -1842,6 +1979,16 @@ function handleFreeInput() {
   const input = document.getElementById('free-msg-input');
   const text = input.value.toUpperCase();
   const result = freeHandleInput(text);
+  STATE.legacyView = false;
+  STATE.freeText = text;
+  const bad = unsupportedChars(text);
+  const warn = document.getElementById('free-warn');
+  if (bad.length) {
+    warn.textContent = 'Skipped ' + bad.map(c => '"' + c + '"').join(' ') + ': only A–Z, 0–9 and spaces can be encoded.';
+    warn.style.display = 'block';
+  } else {
+    warn.style.display = 'none';
+  }
   STATE.boardPieces = result.boardPieces;
   STATE.messageChars = result.messageChars;
   STATE.highlights = new Set();
@@ -1867,42 +2014,61 @@ function generateShareLink(filename) {
   return window.location.origin + window.location.pathname + '#cipher=' + encoded;
 }
 
+function showDecoded(dec, filename) {
+  const r = boardForDecoded(dec);
+  STATE.legacyView = dec.version === 1;
+  STATE.boardPieces = {};
+  STATE.highlights = r.highlights;
+  STATE.currentMessage = dec.message;
+  STATE.currentFilename = filename;
+  STATE.messageChars = [...dec.message].map(function(ch, i) {
+    return { char: ch, sq: r.squares[i], index: i };
+  });
+  renderBoard();
+  v1AnimatePieces(r.board, function() {
+    STATE.boardPieces = r.board;
+    updateMsgEditor();
+  });
+  updateMsgEditor();
+  updatePieceCipher(dec.message);
+}
+
+function switchMode(mode) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.toggle('active', t.dataset.mode === mode); });
+  document.querySelectorAll('.mode-section').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('sec-' + mode).classList.add('active');
+  STATE.mode = mode;
+}
+
+function setDecryptResult(text, isError) {
+  const el = document.getElementById('dec-message');
+  el.textContent = text;
+  el.classList.toggle('is-error', !!isError);
+  document.getElementById('dec-result').style.display = 'block';
+}
+
+/* Opens #cipher=... links, both on page load and when a new link is opened in an existing tab */
 function handleIncomingShare() {
   const hash = window.location.hash;
   if (!hash.startsWith('#cipher=')) return false;
   const encoded = hash.slice(8);
-  try {
-    const filename = decodeURIComponent(escape(atob(encoded)));
-    const sqs = parseFilename(filename);
-    if (!sqs.length) return false;
-    const msg = sqs.map(s => STATE.mapping.sqToChar[s] || '?').join('');
-    const squares = [...msg].map(c => STATE.mapping.charToSq[c]);
-    const result = generateEncryptBoard(squares, msg);
-    STATE.boardPieces = {};
-    STATE.highlights = result.highlights;
-    STATE.messageChars = [];
-    renderBoard();
-    v1AnimatePieces(result.board, function() {
-      STATE.boardPieces = result.board;
-      STATE.currentMessage = msg;
-    });
-    updatePieceCipher(msg);
-    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-    document.querySelectorAll('.mode-section').forEach(function(s) { s.classList.remove('active'); });
-    document.querySelector('.tab[data-mode="decrypt"]').classList.add('active');
-    document.getElementById('sec-decrypt').classList.add('active');
-    STATE.mode = 'decrypt';
-    document.getElementById('dec-input').value = filename.replace(/\.png$/i, '');
-    document.getElementById('dec-message').textContent = msg;
-    document.getElementById('dec-result').style.display = 'block';
-    STATE.messageChars = [...msg].map(function(ch, i) {
-      return { char: ch, sq: STATE.mapping.charToSq[ch], index: i };
-    });
-    updateMsgEditor();
-    window.location.hash = '';
-    showToast('Shared message received!');
-    return true;
-  } catch(e) { return false; }
+  // Clear the hash without adding a history entry, so the same link can be opened again
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+  let filename;
+  try { filename = decodeURIComponent(escape(atob(decodeURIComponent(encoded)))); }
+  catch (e) { showToast('This share link looks damaged or incomplete.'); return false; }
+  switchMode('decrypt');
+  document.getElementById('dec-input').value = filename.replace(/\.png$/i, '');
+  const dec = decodeCipher(filename);
+  if (!dec.ok) {
+    setDecryptResult(NOT_CIPHER_MSG, true);
+    showToast(NOT_CIPHER_MSG);
+    return false;
+  }
+  setDecryptResult(dec.message, false);
+  showDecoded(dec, filename);
+  showToast('Shared message received!');
+  return true;
 }
 
 /* ─── Toast ─── */
@@ -1922,7 +2088,7 @@ function startDrag(e, color, type, fromSq) {
   e.preventDefault();
   dragData = { color, type, fromSq };
   ghostEl = document.createElement('div');
-  ghostEl.className = 'drag-ghost';
+  ghostEl.className = 'drag-ghost piece-' + color;
   ghostEl.innerHTML = getPieceSVG(color, type);
   document.body.appendChild(ghostEl);
   moveGhost(e);
@@ -2002,11 +2168,7 @@ document.getElementById('tray').addEventListener('pointerdown', function(e) {
 /* ─── Tabs ─── */
 document.querySelectorAll('.tab').forEach(function(tab) {
   tab.addEventListener('click', function() {
-    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-    tab.classList.add('active');
-    document.querySelectorAll('.mode-section').forEach(function(s) { s.classList.remove('active'); });
-    STATE.mode = tab.dataset.mode;
-    document.getElementById('sec-' + STATE.mode).classList.add('active');
+    switchMode(tab.dataset.mode);
     if (STATE.mode === 'free') updateSidebar();
     if (STATE.mode === '1v1') {
       v1UpdateTurn();
@@ -2029,21 +2191,25 @@ document.getElementById('overlay-label').addEventListener('click', function() {
 /* ─── Encrypt ─── */
 document.getElementById('enc-btn').addEventListener('click', function() {
   const msg = document.getElementById('enc-input').value.toUpperCase();
-  if (!msg) return;
-  const { charToSq } = STATE.mapping;
-  const bad = [...msg].filter(c => !charToSq[c]);
-  if (bad.length) {
-    showToast('Unsupported: ' + [...new Set(bad)].join(', '));
+  if (!msg.trim()) {
+    showToast('Type a message to encrypt first.');
+    document.getElementById('enc-input').focus();
     return;
   }
-  const squares = [...msg].map(c => charToSq[c]);
-  const result = generateEncryptBoard(squares, msg);
+  const bad = unsupportedChars(msg);
+  if (bad.length) {
+    showToast('Unsupported: ' + bad.join(', ') + ' (use A–Z, 0–9 and spaces)');
+    return;
+  }
+  const result = encryptMessage(msg);
 
+  STATE.legacyView = false;
   STATE.boardPieces = result.board;
   STATE.highlights = result.highlights;
   STATE.currentMessage = msg;
+  STATE.currentFilename = result.filename;
   STATE.messageChars = [...msg].map(function(ch, i) {
-    return { char: ch, sq: charToSq[ch], index: i };
+    return { char: ch, sq: result.squares[i], index: i };
   });
   renderBoard();
   updateMsgEditor();
@@ -2074,23 +2240,19 @@ document.getElementById('enc-share').addEventListener('click', function() {
 
 /* ─── Decrypt ─── */
 document.getElementById('dec-btn').addEventListener('click', function() {
-  const code = document.getElementById('dec-input').value;
-  if (!code) return;
-  const sqs = parseFilename(code);
-  if (!sqs.length) {
-    document.getElementById('dec-message').textContent = 'No valid moves found.';
-    document.getElementById('dec-result').style.display = 'block';
+  const code = document.getElementById('dec-input').value.trim();
+  if (!code) {
+    showToast('Paste a filename to decrypt first.');
+    document.getElementById('dec-input').focus();
     return;
   }
-  const msg = sqs.map(s => STATE.mapping.sqToChar[s] || '?').join('');
-  document.getElementById('dec-message').textContent = msg;
-  document.getElementById('dec-result').style.display = 'block';
-  STATE.currentMessage = msg;
-  STATE.messageChars = [...msg].map(function(ch, i) {
-    return { char: ch, sq: STATE.mapping.charToSq[ch], index: i };
-  });
-  updateMsgEditor();
-  updatePieceCipher(msg);
+  const dec = decodeCipher(code);
+  if (!dec.ok) {
+    setDecryptResult(dec.reason === 'empty' ? 'No chess moves found in that text.' : NOT_CIPHER_MSG, true);
+    return;
+  }
+  setDecryptResult(dec.message, false);
+  showDecoded(dec, code.replace(/\.png$/i, '') + '.png');
   showToast('Message decoded!');
 });
 
@@ -2114,12 +2276,12 @@ document.getElementById('free-clear').addEventListener('click', function() {
 document.getElementById('v1-send').addEventListener('click', function() {
   const input = document.getElementById('v1-msg-input');
   const msg = input.value.trim();
-  if (!msg) return;
+  if (!msg) { showToast('Type a message to send first.'); input.focus(); return; }
   if (V1.isAnimating) return;
 
-  const bad = [...msg.toUpperCase()].filter(c => !STATE.mapping.charToSq[c]);
+  const bad = unsupportedChars(msg.toUpperCase());
   if (bad.length) {
-    showToast('Unsupported: ' + [...new Set(bad)].join(', '));
+    showToast('Unsupported: ' + bad.join(', ') + ' (use A–Z, 0–9 and spaces)');
     return;
   }
 
@@ -2127,8 +2289,11 @@ document.getElementById('v1-send').addEventListener('click', function() {
   const entry = v1SendMessage(msg);
   if (!entry) return;
 
+  STATE.legacyView = false;
   STATE.boardPieces = entry.board;
   STATE.highlights = entry.highlights;
+  STATE.currentMessage = '';
+  STATE.currentFilename = entry.filename;
   STATE.messageChars = [];
   renderBoard();
   updateMsgEditor();
@@ -2163,9 +2328,11 @@ document.getElementById('v1-history').addEventListener('click', function(e) {
     const idx = parseInt(viewBtn.dataset.index);
     const m = V1.messages[idx];
     if (!m || V1.isAnimating) return;
+    STATE.legacyView = false;
     STATE.boardPieces = {};
     STATE.highlights = m.highlights;
     STATE.messageChars = [];
+    STATE.currentFilename = m.filename;
     renderBoard();
     v1AnimatePieces(m.board, function() {
       STATE.boardPieces = m.board;
@@ -2183,7 +2350,11 @@ document.getElementById('v1-history').addEventListener('click', function(e) {
       if (area.innerHTML) {
         area.innerHTML = '';
       } else {
-        area.innerHTML = '<div class="v1-decoded-reveal">' + decoded + '</div>';
+        area.innerHTML = '';
+        const d = document.createElement('div');
+        d.className = 'v1-decoded-reveal';
+        d.textContent = decoded;
+        area.appendChild(d);
       }
     }
   }
@@ -2253,28 +2424,39 @@ function exportBoardAsPNG(filename) {
   },'image/png');
 }
 
+/* The PNG's filename is the cipher, so use the real encrypted filename */
+function currentExportFilename() {
+  if (STATE.mode === 'free') {
+    const text = (STATE.freeText || '').split('').filter(c => CHARACTERS.includes(c)).join('');
+    if (!text) return 'chess_board.png';
+    const body = messageToSquares(text, STATE.mapping);
+    const sqs = body.concat([checksumSquare(text)]);
+    const rng = mulberry32(hashToSeed('free_' + text));
+    const moves = sqs.map(sq => makeNotation(sq, (STATE.boardPieces[sq] || { type: 'knight' }).type, rng));
+    return formatFilename(moves, sqs.length % 2 ? '1-0' : '0-1');
+  }
+  return STATE.currentFilename || 'chess_board.png';
+}
+
 document.getElementById('export-btn').addEventListener('click', function() {
-  const fname = STATE.currentMessage ? formatFilename(
-    Object.keys(STATE.boardPieces).slice(0,STATE.currentMessage.length).map(function(sq) {
-      const p = STATE.boardPieces[sq];
-      return (PIECE_NOTATION[p?.type]||'') + sq;
-    })
-  ) : 'chess_board.png';
-  exportBoardAsPNG(fname);
+  exportBoardAsPNG(currentExportFilename());
   showToast('Board saved as PNG!');
 });
 
 /* ─── Init ─── */
 STATE.mapping = createMapping();
+const LEGACY_MAPPING = createLegacyMapping();
 buildBoardDOM();
 buildTray();
 v1UpdateTurn();
 v1RenderHistory();
 handleIncomingShare();
+window.addEventListener('hashchange', handleIncomingShare);
 
 window.APP = {
   STATE, V1, placePiece, removePiece, clearBoard, renderBoard, updateSidebar,
-  mapping: STATE.mapping, createMapping, parseFilename, generateEncryptBoard,
+  mapping: STATE.mapping, legacyMapping: LEGACY_MAPPING, createMapping, parseFilename, parseCipher,
+  decodeCipher, encryptMessage, checksumSquare, messageToSquares, generateEncryptBoard,
   encodePieceCipher, decodePieceCipher
 };
 </script>
