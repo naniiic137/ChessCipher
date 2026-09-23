@@ -1,9 +1,13 @@
-import pygame
 import os
 import random
 import hashlib
 import re
 import sys
+
+try:
+    import pygame  # only needed to render the PNG; the cipher itself is pure Python
+except ImportError:  # pragma: no cover
+    pygame = None
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PIECE_DIR = os.path.join(SCRIPT_DIR, 'color')
@@ -54,12 +58,67 @@ def load_piece(color, piece):
     return scaled
 
 
+ALL_SQUARES = [f"{f}{r}" for r in '12345678' for f in 'abcdefgh']
+
+# Format v2: every square stands for a character. E, T, A and space get 3
+# squares, Q, Z, X, J and the digits get 1, every other letter gets 2. The k-th
+# occurrence of a character uses candidate k mod n, so repeated letters land on
+# different squares. A v2 filename ends with a checksum move and a game result
+# (1-0 / 0-1), which marks the format. index.html implements the same scheme.
+V2_SLOTS = {'E': 3, 'T': 3, 'A': 3, ' ': 3, 'Q': 1, 'Z': 1, 'X': 1, 'J': 1}
+RESULT_TOKENS = ('1-0', '0-1', '\u00bd-\u00bd')
+NOT_CIPHER_MSG = "This doesn't look like a ChessCipher message."
+
+
+def slot_count(ch):
+    if ch in V2_SLOTS:
+        return V2_SLOTS[ch]
+    return 1 if ch.isdigit() else 2
+
+
 def create_mapping():
-    squares = [f"{f}{r}" for r in '12345678' for f in 'abcdefgh']
-    squares.sort(key=lambda s: hashlib.sha256(CIPHER_SEED + s.encode()).hexdigest())
+    """v2 mapping: returns (char -> list of candidate squares, square -> char)."""
+    squares = sorted(ALL_SQUARES,
+                     key=lambda s: hashlib.sha256(CIPHER_SEED + b':v2:' + s.encode()).hexdigest())
+    c2s, s2c, k = {}, {}, 0
+    for ch in CHARACTERS:
+        n = slot_count(ch)
+        c2s[ch] = squares[k:k + n]
+        for sq in c2s[ch]:
+            s2c[sq] = ch
+        k += n
+    return c2s, s2c
+
+
+def create_legacy_mapping():
+    """v1 mapping (one square per character), kept so old filenames still decode."""
+    squares = sorted(ALL_SQUARES, key=lambda s: hashlib.sha256(CIPHER_SEED + s.encode()).hexdigest())
     c2s = {ch: squares[i] for i, ch in enumerate(CHARACTERS)}
     s2c = {squares[i]: ch for i, ch in enumerate(CHARACTERS)}
     return c2s, s2c
+
+
+def message_to_squares(msg, c2s=None):
+    """Squares for a message, rotating through each character's candidates."""
+    if c2s is None:
+        c2s, _ = create_mapping()
+    seen = {}
+    out = []
+    for ch in msg:
+        cands = c2s[ch]
+        k = seen.get(ch, 0)
+        seen[ch] = k + 1
+        out.append(cands[k % len(cands)])
+    return out
+
+
+def checksum_square(msg):
+    n = int(hashlib.sha256(CIPHER_SEED + b':check:' + msg.encode()).hexdigest()[:8], 16) % 64
+    return ALL_SQUARES[n]
+
+
+def result_token(n_moves):
+    return '1-0' if n_moves % 2 else '0-1'
 
 
 def is_light_square(sq):
@@ -184,29 +243,63 @@ def make_notation(sq, piece, rng):
     return f"{pf}{cap}{sq}{chk}"
 
 
-def format_filename(moves):
+def format_filename(moves, result=None):
     parts = []
     for i, m in enumerate(moves):
         parts.append(f"{i // 2 + 1}.{m}" if i % 2 == 0 else m)
     name = '_'.join(parts)
     if len(name) > 240:
         name = '_'.join(moves)
+    if result:
+        name += '_' + result
     return re.sub(r'[<>:"/\\|?*]', '', name) + '.png'
 
 
-def parse_filename(text):
-    text = re.sub(r'\.png$', '', text.strip().strip('"').strip("'"), flags=re.I)
+def parse_cipher(text):
+    """Return (squares, is_v2) for a filename."""
+    text = re.sub(r'\.png$', '', text.strip().strip('"').strip("'").strip(), flags=re.I)
+    toks = [t.strip() for t in text.split('_') if t.strip()]
+    v2 = False
+    if toks and re.sub(r'^\d+\.', '', toks[-1]) in RESULT_TOKENS:
+        v2 = True
+        toks.pop()
     out = []
-    for tok in text.split('_'):
+    for tok in toks:
         tok = re.sub(r'^\d+\.', '', tok).rstrip('+#')
         if len(tok) >= 2:
             sq = tok[-2:].lower()
             if sq[0] in 'abcdefgh' and sq[1] in '12345678':
                 out.append(sq)
-    return out
+    return out, v2
 
 
-def generate_board(msg_squares, msg_text):
+def parse_filename(text):
+    return parse_cipher(text)[0]
+
+
+def decode_filename(text):
+    """Decode a filename. Returns the message, or None if it isn't a ChessCipher message."""
+    squares, v2 = parse_cipher(text)
+    if not squares:
+        return None
+    if v2:
+        if len(squares) < 2:
+            return None
+        _, s2c = create_mapping()
+        msg = ''.join(s2c[s] for s in squares[:-1])
+        return msg if checksum_square(msg) == squares[-1] else None
+    _, s2c = create_legacy_mapping()
+    if not all(s in s2c for s in squares):
+        return None
+    return ''.join(s2c[s] for s in squares)
+
+
+def encode_squares(msg):
+    """All board squares for a v2 message: the message squares plus the checksum square."""
+    return message_to_squares(msg) + [checksum_square(msg)]
+
+
+def generate_board(msg_squares, msg_text, result=None):
     seed = int(hashlib.sha256(msg_text.encode()).hexdigest(), 16) % (2 ** 32)
     rng = random.Random(seed)
 
@@ -227,6 +320,10 @@ def generate_board(msg_squares, msg_text):
                 pt = pick_valid_piece(sq, pc, msg_counts, rng)
                 if pt is None:
                     pt = 'pawn'
+            # A pawn can't arrive on its own back two ranks: use a minor piece instead
+            rank = int(sq[1])
+            if pt == 'pawn' and ((pc == 'white' and rank <= 2) or (pc == 'black' and rank >= 7)):
+                pt = rng.choice(['knight', 'bishop'])
             board[sq] = (pc, pt)
             msg_counts[pc][pt] = msg_counts[pc].get(pt, 0) + 1
 
@@ -336,7 +433,7 @@ def generate_board(msg_squares, msg_text):
             surface.blit(piece_img, (px + offset, py + offset))
 
     moves = [make_notation(sq, board[sq][1], rng) for sq in msg_squares]
-    fname = format_filename(moves)
+    fname = format_filename(moves, result)
     fpath = os.path.join(SCRIPT_DIR, fname)
     pygame.image.save(surface, fpath)
 
@@ -357,30 +454,34 @@ def encrypt():
         print(f"Unsupported characters: {set(bad)}")
         print(f"Supported: {CHARACTERS}")
         return
-    generate_board([c2s[c] for c in msg], msg)
+    squares = encode_squares(msg)
+    generate_board(squares, msg, result_token(len(squares)))
 
 
 def decrypt():
-    _, s2c = create_mapping()
     code = input("\nPaste the filename (without .png): ").strip().strip('"').strip("'")
     if not code:
         print("No input.")
         return
-    sqs = parse_filename(code)
-    if not sqs:
+    if not parse_filename(code):
         print("No valid moves found in that input.")
         return
-    result = ''.join(s2c.get(s, '?') for s in sqs)
+    result = decode_filename(code)
+    if result is None:
+        print(f"\n{NOT_CIPHER_MSG}")
+        return
     print(f"\nDecrypted: {result}")
 
 
 if __name__ == '__main__':
+    if pygame is None:
+        sys.exit("pygame is required to render boards: pip install pygame")
     os.environ['SDL_VIDEODRIVER'] = 'dummy'
     pygame.init()
     pygame.display.set_mode((1, 1))
 
     print("=" * 42)
-    print("  CHESS CIPHER v4.0 (Steganographic)")
+    print("  CHESS CIPHER v5.0 (Steganographic)")
     print("=" * 42)
     print("1 : Encrypt (generate board image)")
     print("2 : Decrypt (from filename)")
