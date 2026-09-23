@@ -1,12 +1,22 @@
 # Generated board images (contain encrypted messages)
 *.png
-# But keep the piece assets used by main.py
+# But keep the piece assets used by main.py and the README screenshots
 !color/*.png
+!docs/screenshots/*.png
 
 # Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+*.egg-info/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
 
 # IDE / Editor
 .vscode/

@@ -208,6 +208,23 @@ textarea { resize: vertical; min-height: 60px; }
 
 .result-box .copy-btn:hover { background: #81b64c; color: #fff; border-color: #81b64c; }
 
+#enc-filename { display: block; padding-right: 52px; }
+
+.pc-output-code .copy-btn {
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  background: rgba(255,255,255,0.08);
+  color: #9b9892;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.pc-output-code .copy-btn:hover { background: #81b64c; color: #fff; border-color: #81b64c; }
+
 .toggle-row {
   display: flex;
   align-items: center;
@@ -1221,6 +1238,7 @@ const V1_UNICODE = {
 /* ─── Constants ─── */
 const PIECE_NOTATION = { king:'K', queen:'Q', rook:'R', bishop:'B', knight:'N', pawn:'' };
 const BACK_RANK = ['rook','knight','bishop','queen','king','bishop','knight','rook'];
+const PIECE_LIMITS = { pawn: 8, rook: 2, knight: 2, bishop: 2, queen: 1, king: 1 };
 
 /* ─── State ─── */
 const STATE = {
@@ -1428,6 +1446,14 @@ function generateEncryptBoard(msgSquares, msgText) {
     const rank = parseInt(sq[1]);
     if (pt === 'pawn' && (rank === 1 || rank === 8)) {
       pt = ['knight','bishop','rook'][Math.floor(rng()*3)];
+    }
+    // Respect realistic piece counts per side (same limits as main.py)
+    const countOf = (c, t) => Object.values(board).filter(p => p.color === c && p.type === t).length;
+    if (countOf(pc, pt) >= PIECE_LIMITS[pt]) {
+      const fallbacks = ['pawn','knight','bishop','rook','queen'].filter(t =>
+        !(t === 'pawn' && (rank === 1 || rank === 8)) && countOf(pc, t) < PIECE_LIMITS[t]);
+      if (!fallbacks.length) continue;
+      pt = fallbacks[Math.floor(rng() * fallbacks.length)];
     }
     board[sq] = { color: pc, type: pt };
     if (pc === 'white') wc++; else bc++;
