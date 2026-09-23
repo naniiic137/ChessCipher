@@ -145,4 +145,4 @@ For stronger security, change `CIPHER_SEED` (in both `index.html` and `main.py`)
 
 ## License
 
-Do whatever you want with it.
+© 2026 Hamza Ben Ismail. All rights reserved.
